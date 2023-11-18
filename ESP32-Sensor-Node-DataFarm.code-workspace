@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"name": "test",
+			"path": "../../../PlatformIO/Projects/test"
+		}
+	],
+	"settings": {}
+}
