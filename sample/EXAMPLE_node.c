@@ -1,7 +1,6 @@
 #include <SPI.h>
 #include <RHMesh.h>
 #include <RH_RF95.h>
-
 #define RH_MESH_MAX_MESSAGE_LEN 50
 
 // in this small artificial network of 4 nodes
@@ -80,3 +79,5 @@ void loop() {
     Serial.println(rf95.lastRssi());
   }
 }
+
+
