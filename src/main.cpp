@@ -1,4 +1,7 @@
 #include "sensorState.h"
+
+SensorState currentState = SensorState::BOOTING
+
 void setup()
 {
     Serial.begin(115200);
@@ -6,29 +9,24 @@ void setup()
 
 void loop() 
 {
-    delay(2000);
-    switch () 
+    switch (currentState) 
     {
         case BridgeState::BOOTING:
             //do something then change to new state
             break;
         
-        case BridgeState::WIFI_CONNECT:
+        case BridgeState::RECIEVING:
             //do something then change to new state
             break;
 
-        case BridgeState::BLUETOOTH_CONNECT:
+        case BridgeState::RELAY:
             //do something then change to new state
             break;
-        case BridgeState::POST: 
+        case BridgeState::CAPTURE: 
         {
             //do something then change to new state            
             break;
         }
-
-        case BridgeState::LORA_LISTEN:
-            //do something then change to new state
-            break;
     }
     delay(1000);
 }
