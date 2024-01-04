@@ -13,17 +13,9 @@ void loop() {
             Serial.println("Booting up...");
             
             // Transition to the next state (e.g., CAPTURE)
-            currentState = SensorState::CAPTURE;
-            break;
-
-        case SensorState::CAPTURE:
-            // Perform actions for CAPTURE state
-            Serial.println("Capturing sensor data...");
-            
-            // Transition to the next state (e.g., SENDING)
             currentState = SensorState::SENDING;
             break;
-
+            
         case SensorState::SENDING:
             // Perform actions for SENDING state
             Serial.println("Sending sensor data...");
