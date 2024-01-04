@@ -1,3 +1,4 @@
+#include "sensorState.h"
 void setup()
 {
     Serial.begin(115200);
