@@ -1,37 +1,15 @@
-#include "sensorState.h"
+#include <Arduino.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#include <freertos/semphr.h>
 
-SensorState currentState = SensorState::BOOTING;
-
-void setup() {
+void setup()
+{
     Serial.begin(115200);
 }
 
-void loop() {
-    switch (currentState) {
-        case SensorState::BOOTING:
-            // Perform actions for BOOTING state
-            Serial.println("Booting up...");
-            
-            // Transition to the next state (e.g., CAPTURE)
-            currentState = SensorState::SENDING;
-            break;
-            
-        case SensorState::SENDING:
-            // Perform actions for SENDING state
-            Serial.println("Sending sensor data...");
-            
-            // Transition to the next state (e.g., RELAY or BOOTING)
-            currentState = SensorState::RELAY;
-            break;
 
-        case SensorState::RELAY:
-            // Perform actions for RELAY state
-            Serial.println("Relaying messages...");
-            
-            // Transition to the next state (e.g., BOOTING or CAPTURE)
-            currentState = SensorState::BOOTING;
-            break;
-    }
+void loop()
+{
 
-    delay(1000);
 }
