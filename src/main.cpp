@@ -1,27 +1,20 @@
-#include <Arduino.h>
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
-#include <freertos/semphr.h>
+#include "lora.h"
+#include "capture.h"
 
-void setup()
+// Define the queue handle
+QueueHandle_t xQueue;
+
+void setup() 
 {
-    Serial.begin(115200);
-    
-    counterMutex = xSemaphoreCreateMutex();
-    if (counterMutex != NULL) 
-    {
-        xTaskCreate(incrementTask,"IncrementTask",10000,NULL,1,NULL);
-        xTaskCreate(decrementTask,"DecrementTask",10000,NULL,2,NULL);
-        vTaskStartScheduler();
-    } 
-    else 
-    {
-        Serial.println("Mutex creation failed!");
-    }
+  // Create a queue to hold 5 values of type data
+  xQueue = xQueueCreate(5, sizeof(data));
+
+  // Create tasks
+  xTaskCreate(capture, "capture", 3000, NULL, 1, NULL);
+  xTaskCreate(loraSend, "loraSend", 3000, NULL, 2, NULL);
 }
 
-
-void loop()
+void loop() 
 {
-
+  // Empty loop as we are using FreeRTOS tasks
 }

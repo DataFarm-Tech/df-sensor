@@ -1,7 +1,18 @@
-#include <Arduino.h>
+#ifndef LORA_H
+#define LORA_H
+
+
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
-#include <freertos/semphr.h>
+#include <freertos/queue.h>
+#include <SPI.h>
+#include <LoRa.h>
 
-void send(void *pvParameters, String nodeId, float ph, float moisture);
-void listen(void *pvParameters) //not sure what param needed for this function yet
+#define ss 5
+#define rst 14
+#define dio0 2
+
+void loraSend(void *pvParameters);
+
+
+#endif // LORA_H
