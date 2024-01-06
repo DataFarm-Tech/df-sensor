@@ -1,0 +1,185 @@
+main.cpp
+
+#include <Arduino.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#include <freertos/semphr.h>
+#include "capture.h"
+#include "eeprom.h"
+#include "lora.h"
+
+SemaphoreHandle_t counterMutex;
+
+void setup()
+{
+    Serial.begin(115200);
+
+    counterMutex = xSemaphoreCreateMutex();
+    if (counterMutex != NULL) 
+    {
+        xTaskCreate(listen, "LoraListen", 10000, NULL, 1, NULL);
+        xTaskCreate(send, "LoraSend", 10000, NULL, 2, NULL);
+        vTaskStartScheduler();
+    } 
+    else 
+    {
+        Serial.println("Mutex creation failed!");
+    }
+}
+
+void loop()
+{
+    // Code in the loop function will not be executed as tasks are running in FreeRTOS
+}
+
+
+capture.cpp
+#include "capture.h"
+
+float getPh()
+{
+    //read data from GPIO pins
+    return 3.6;
+}
+
+
+float getMoisture()
+{
+    //read data from GPIO pins
+    return 3.9;
+}
+
+
+
+
+lora.cpp
+#include "lora.h"
+void send(void *pvParameters)
+{
+    eeprom();
+    eeprom::restoreEEPROM();
+    std::string nodeId = eeprom::getNodeId();
+
+    float moisture = getMoisture();
+    float ph = getPh();
+
+    Serial.println(moisture);
+    Serial.println(ph);
+    Serial.println(nodeId.c_str());    
+}
+
+
+void listen(void *pvParameters) //not sure what param needed for this function yet
+{
+    Serial.println("Hello, I am listening");
+
+}
+
+
+
+
+eeprom.cpp
+#include "eeprom.h"
+
+eeprom::tsEEPROMContent eeprom::eepromData;
+
+eeprom::eeprom()
+{
+    EEPROM.begin(sizeof(tsEEPROMContent));
+}
+
+void eeprom::setNodeId(const String & nodeId)
+{
+    nodeId.toCharArray(eepromData.nodeId, sizeof(eepromData.nodeId));
+}
+
+bool eeprom::isNodeId()
+{
+    std::string nodeId = eeprom::getNodeId();
+    if (nodeId.empty())
+    {
+        return false;
+    }
+    return true;
+}
+
+std::string eeprom::getNodeId()
+{
+    std::string nodeId = std::string(eepromData.nodeId);
+    return nodeId;
+}
+
+void eeprom::clearEEPROM() 
+{
+    
+    for (int i = 0; i < sizeof(tsEEPROMContent); i++) 
+    {
+        EEPROM.write(i, 0xFF);
+    }
+    EEPROM.commit();
+}
+
+void eeprom::restoreEEPROM()
+{
+    EEPROM.readBytes(0, (void *)&eepromData, sizeof(tsEEPROMContent));
+}
+
+void eeprom::saveEEPROM()
+{
+    EEPROM.writeBytes(0, (void *)&eepromData, sizeof(tsEEPROMContent));
+    EEPROM.commit();
+}
+
+
+capture.h
+#include <Arduino.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#include <freertos/semphr.h>
+
+float getPh();
+float getMoisture();
+
+
+eeprom.h
+#ifndef EEPROM_H
+#define EEPROM_H
+
+#include <EEPROM.h>
+#include <Arduino.h>
+
+class eeprom {
+public:
+    typedef struct _tsEEPROMContent
+    {
+        char nodeId[33];
+    } tsEEPROMContent;
+    eeprom();
+    static const int EEPROM_SIZE = 99; // Adjust the size based on your string length
+
+    static tsEEPROMContent eepromData;
+
+    static void setNodeId(const String & nodeId);
+    static bool isNodeId();
+    static std::string getNodeId();
+    static void clearEEPROM();
+    static void saveEEPROM();
+    static void restoreEEPROM();
+
+private:
+};
+
+#endif  // EEPROM_UTIL_H
+
+
+lora.h
+#pragma once
+#include <Arduino.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#include <freertos/semphr.h>
+#include "capture.h"
+#include "eeprom.h"
+
+void send(void *pvParameters);
+void listen(void *pvParameters);
