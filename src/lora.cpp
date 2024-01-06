@@ -1,5 +1,14 @@
-#include "lora.h"
+// #include "lora.h"
 #include "capture.h"
+#include <LoRa.h>
+#include <SPI.h>
+
+
+#define ss 5
+#define rst 14
+#define dio0 2
+
+
 extern QueueHandle_t xQueue;
 
 
