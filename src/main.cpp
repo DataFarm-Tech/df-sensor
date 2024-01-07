@@ -1,6 +1,11 @@
+<<<<<<< Updated upstream
 #include <SPI.h>
 #include <RHMesh.h>
 #include <RH_RF95.h>
+=======
+#include "lora2.h"
+#include "capture.h"
+>>>>>>> Stashed changes
 
 #define RH_MESH_MAX_MESSAGE_LEN 50
 
