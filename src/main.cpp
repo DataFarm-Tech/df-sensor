@@ -10,9 +10,9 @@
 #define rst 14
 #define dio0 2
 
-#ifndef NODE_ID
-#define NODE_ID 0  // Default nodeId if not defined
-#endif
+// #ifndef NODE_ID
+// #define NODE_ID 0  // Default nodeId if not defined
+// #endif
 
 typedef struct {
     float moisture;
@@ -51,7 +51,7 @@ void loop() {}
 void* capture(void*)
 {
     data sensorData;
-    sensorData.nodeId = std::to_string(NODE_ID); // Convert NODE_ID to std::string
+    sensorData.nodeId = "TEST"; // Convert NODE_ID to std::string
 
     while (1) 
     {
