@@ -3,13 +3,12 @@
 #include <SPI.h>
 #include <iostream>
 #include <Arduino.h>
-#include "eeprom.h"
 #include <LoRa.h>
 
 #define THREAD_STACK_SIZE 8192 // Adjust the stack size as needed
 
 #define ss 5
-#define rst 14
+#define rst 25
 #define dio0 2
 
 // #ifndef NODE_ID
