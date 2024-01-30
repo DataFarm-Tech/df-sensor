@@ -11,9 +11,9 @@
 #define rst 25
 #define dio0 2
 
-// #ifndef NODE_ID
-// #define NODE_ID 0  // Default nodeId if not defined
-// #endif
+#ifndef NODE_ID
+#define NODE_ID "test"  // Default nodeId if not defined
+#endif
 
 typedef struct {
     float moisture;
@@ -62,7 +62,7 @@ void loop() {}
 void* capture(void*)
 {
     data sensorData;
-    sensorData.nodeId = "TEST"; // Convert NODE_ID to std::string
+    sensorData.nodeId = NODE_ID; // Convert NODE_ID to std::string
 
     while (1) 
     {
@@ -74,7 +74,7 @@ void* capture(void*)
         size_t queueSize = globalQueue.size(); // Get the number of elements in the queue
         pthread_mutex_unlock(&queueMutex);
         printf("Capturing Data: %.2f, pH: %.2f, nodeId: %s, queueSize: %zu\n", sensorData.moisture, sensorData.ph, sensorData.nodeId.c_str(), queueSize);
-        delay(60000);
+        delay(4000);
     }
 }
 
@@ -104,19 +104,21 @@ void* send(void*)
             globalQueue.pop();
         }
         pthread_mutex_unlock(&queueMutex);
-        delay(30000); // Simulate some work
+        delay(4000); // Simulate some work
     }
 }
 
 
+#include <cstdlib> // Include the necessary header for generating random numbers
+
 float getPh()
 {
-    // Read data from GPIO pins
-    return 3.6;
+    // Generate a random number between 0 and 128
+    return static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * 128.0f;
 }
 
 float getMoisture()
 {
-    // Read data from GPIO pins
-    return 3.9;
+    // Generate a random number between 0 and 128
+    return static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * 128.0f;
 }
