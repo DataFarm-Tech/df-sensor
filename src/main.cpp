@@ -3,11 +3,12 @@
 #include <SPI.h>
 #include <iostream>
 #include <Arduino.h>
-#include "eeprom.h"
 #include <LoRa.h>
 
+#define THREAD_STACK_SIZE 8192 // Adjust the stack size as needed
+
 #define ss 5
-#define rst 14
+#define rst 25
 #define dio0 2
 
 // #ifndef NODE_ID
@@ -36,11 +37,21 @@ void setup()
 
     pthread_t th_capture;
     pthread_t th_send;
+    pthread_attr_t attr_capture, attr_send;
+
+    pthread_attr_init(&attr_capture);
+    pthread_attr_setstacksize(&attr_capture, THREAD_STACK_SIZE);
+    pthread_attr_init(&attr_send);
+    pthread_attr_setstacksize(&attr_send, THREAD_STACK_SIZE);
 
     delay(2000);
 
-    pthread_create(&th_capture, NULL, capture, NULL);
-    pthread_create(&th_send, NULL, send, NULL);
+    pthread_create(&th_capture, &attr_capture, capture, NULL);
+    pthread_create(&th_send, &attr_send, send, NULL);
+
+    // Destroy the thread attributes when no longer needed
+    pthread_attr_destroy(&attr_capture);
+    pthread_attr_destroy(&attr_send);
 
     pthread_join(th_capture, NULL);
     pthread_join(th_send, NULL);
