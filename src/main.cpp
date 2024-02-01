@@ -28,7 +28,6 @@ pthread_mutex_t queueMutex = PTHREAD_MUTEX_INITIALIZER;
 float getMoisture();
 float getPh();
 
-
 void* send(void*);
 void* capture(void*);
 
@@ -76,7 +75,7 @@ void* capture(void*)
         if (queueSize < 10) //If the queue size is greater than 10 then halt addition to queue
         {
             globalQueue.push(sensorData); //add struct to queue
-            printf("Capturing Data: %.2f, pH: %.2f, nodeId: %s, queueSize: %zu\n", sensorData.moisture, sensorData.ph, sensorData.nodeId.c_str(), queueSize);
+            printf("Capturing Data: moisture: %.2f, pH: %.2f, nodeId: %s, queueSize: %zu\n", sensorData.moisture, sensorData.ph, sensorData.nodeId.c_str(), queueSize);
         }
         else
         {
@@ -111,7 +110,7 @@ void* send(void*)
             LoRa.beginPacket();
             LoRa.print(message.c_str());
             LoRa.endPacket();
-            printf("Sending Data: %.2f, pH: %.2f, nodeId: %s\n", recData.moisture, recData.ph, recData.nodeId.c_str());
+            printf("Sending Data: moisture: %.2f, pH: %.2f, nodeId: %s\n", recData.moisture, recData.ph, recData.nodeId.c_str());
             globalQueue.pop();
         }
         pthread_mutex_unlock(&queueMutex);
@@ -123,12 +122,12 @@ void* send(void*)
 
 float getPh()
 {
-    // Generate a random number between 0 and 128
-    return static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * 128.0f;
+    // Generate a random number between 1 and 14
+    return static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * 14.1f;
 }
 
 float getMoisture()
 {
-    // Generate a random number between 0 and 128
-    return static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * 128.0f;
+    // Generate a random number between 0 and 100
+    return static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * 100.0f;
 }

@@ -14,7 +14,6 @@ headers = {
 response = requests.post(url, json=data, headers=headers)
 print(response)
 Import("env")
-# Append a define with a string value containing quotes
 env.Append(CPPDEFINES=[
     ("NODE_ID", env.StringifyMacro(nodeId)),
 ])
