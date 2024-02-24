@@ -33,6 +33,16 @@ void* capture(void*);
 
 void setup()
 {
+    LoRa.setPins(ss, rst, dio0); //initalises lora pins define at top of file
+
+        while (!LoRa.begin(915E6)) //Pause until lora connection is correct
+    {
+        printf("LoRa module is not connected or wired incorrectly!\n");
+        delay(500);
+    }
+
+
+    LoRa.setSyncWord(0xF3); //set channel
     Serial.begin(115200);
 
     pthread_t th_capture;
@@ -72,33 +82,25 @@ void* capture(void*)
         pthread_mutex_lock(&queueMutex); //Lock Mutex
         size_t queueSize = globalQueue.size(); // Get the number of elements in the queue
         
-        if (queueSize < 10) //If the queue size is greater than 10 then halt addition to queue
-        {
+        // if (queueSize < 10) //If the queue size is greater than 10 then halt addition to queue
+        // {
             globalQueue.push(sensorData); //add struct to queue
             printf("Capturing Data: moisture: %.2f, pH: %.2f, nodeId: %s, queueSize: %zu\n", sensorData.moisture, sensorData.ph, sensorData.nodeId.c_str(), queueSize);
-        }
-        else
-        {
-            printf("An error has occured, to many items in queue. Halting addition to queue!!\n");
-        }
+        // }
+        // else
+        // {
+        //     printf("An error has occured, to many items in queue. Halting addition to queue!!\n");
+        // }
 
         pthread_mutex_unlock(&queueMutex); //Unlock Mutex
         
-        delay(4000); //measure every 4 secs
+        delay(5000); //measure every 5 seconds
     }
 }
 
 void* send(void*)
 {
-    LoRa.setPins(ss, rst, dio0); //initalises lora pins define at top of file
-    
-    while (!LoRa.begin(915E6)) //Pause until lora connection is correct
-    {
-        printf("LoRa module is not connected or wired incorrectly!\n");
-        delay(500);
-    }
 
-    LoRa.setSyncWord(0xF3); //set channel
     data recData;
     while (1) 
     {
