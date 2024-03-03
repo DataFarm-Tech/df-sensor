@@ -39,7 +39,7 @@ void setup()
 {
     LoRa.setPins(ss, rst, dio0); //initalises lora pins define at top of file
 
-        while (!LoRa.begin(915E6)) //Pause until lora connection is correct
+    while (!LoRa.begin(915E6)) //Pause until lora connection is correct
     {
         printf("LoRa module is not connected or wired incorrectly!\n");
         delay(500);
@@ -62,7 +62,6 @@ void setup()
     pthread_create(&th_capture, &attr_capture, capture, NULL);
     pthread_create(&th_send, &attr_send, send, NULL);
 
-    // Destroy the thread attributes when no longer needed
     pthread_attr_destroy(&attr_capture);
     pthread_attr_destroy(&attr_send);
 
@@ -90,11 +89,10 @@ void* capture(void*)
         pthread_mutex_lock(&queueMutex); //Lock Mutex
         size_t queueSize = globalQueue.size(); // Get the number of elements in the queue
         globalQueue.push(sensorData); //add struct to queue
-        // printf("Capturing Data: moisture: %.2f, pH: %.2f, nodeId: %s, queueSize: %zu\n", sensorData.moisture, sensorData.ph, sensorData.nodeId.c_str(), queueSize);
         printf("Sending Data to Queue: moistureLevel1: %.2f, moistureLevel2: %.2f, moistureLevel3: %.2f, pHLevel1: %.2f, pHLevel2: %.2f, pHLevel3: %.2f, nodeId: %s\n", sensorData.moistureLevel1, sensorData.moistureLevel2, sensorData.moistureLevel3, sensorData.phLevel1, sensorData.phLevel2, sensorData.phLevel3, sensorData.nodeId.c_str());
         pthread_mutex_unlock(&queueMutex); //Unlock Mutex
         
-        delay(5000); //measure every 5 seconds
+        delay(60000); //measure every 5 seconds
     }
 }
 
@@ -115,7 +113,7 @@ void* send(void*)
             globalQueue.pop();
         }
         pthread_mutex_unlock(&queueMutex);
-        delay(4000); // Simulate some work
+        delay(20);
     }
 }
 
