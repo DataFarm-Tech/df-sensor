@@ -112,6 +112,11 @@ void* send(void*)
             printf("Sending Data via LoRa: moistureLevel1: %.2f, moistureLevel2: %.2f, moistureLevel3: %.2f, pHLevel1: %.2f, pHLevel2: %.2f, pHLevel3: %.2f, nodeId: %s\n", recData.moistureLevel1, recData.moistureLevel2, recData.moistureLevel3, recData.phLevel1, recData.phLevel2, recData.phLevel3, recData.nodeId.c_str());
             globalQueue.pop();
         }
+        else
+        {
+            printf("Queue is Empty: Nothing to Send\n");
+            delay(200);
+        }
         pthread_mutex_unlock(&queueMutex);
         delay(20);
     }
