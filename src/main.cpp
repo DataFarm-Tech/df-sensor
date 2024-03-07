@@ -29,13 +29,13 @@ typedef struct {
 std::queue<data> globalQueue;
 pthread_mutex_t queueMutex = PTHREAD_MUTEX_INITIALIZER;
 
-float getMoisture();
-float getPh();
+float getMoisture(void);
+float getPh(void);
 
 void* send(void*);
 void* capture(void*);
 
-void setup()
+void setup(void)
 {
     LoRa.setPins(ss, rst, dio0); //initalises lora pins define at top of file
 
@@ -69,7 +69,7 @@ void setup()
     pthread_join(th_send, NULL);
 }
 
-void loop() {}
+void loop(void) {}
 
 void* capture(void*)
 {
@@ -124,13 +124,13 @@ void* send(void*)
 
 
 
-float getPh()
+float getPh(void)
 {
     // Generate a random number between 1 and 14
     return static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * 14.1f;
 }
 
-float getMoisture()
+float getMoisture(void)
 {
     // Generate a random number between 0 and 100
     return static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * 100.0f;
