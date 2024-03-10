@@ -92,7 +92,7 @@ void* capture(void*)
         printf("Sending Data to Queue: moistureLevel1: %.2f, moistureLevel2: %.2f, moistureLevel3: %.2f, pHLevel1: %.2f, pHLevel2: %.2f, pHLevel3: %.2f, nodeId: %s\n", sensorData.moistureLevel1, sensorData.moistureLevel2, sensorData.moistureLevel3, sensorData.phLevel1, sensorData.phLevel2, sensorData.phLevel3, sensorData.nodeId.c_str());
         pthread_mutex_unlock(&queueMutex); //Unlock Mutex
         
-        delay(60000); //measure every 5 seconds
+        delay(3600000); //measure every 5 seconds
     }
 }
 
