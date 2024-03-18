@@ -44,7 +44,6 @@ void setup(void)
         printf("LoRa module is not connected or wired incorrectly!\n");
         delay(500);
     }
-
     LoRa.setSyncWord(0xF3); //set channel
     Serial.begin(115200);
 
@@ -88,6 +87,7 @@ void* capture(void*)
 
         pthread_mutex_lock(&queueMutex); //Lock Mutex
         size_t queueSize = globalQueue.size(); // Get the number of elements in the queue
+      
         globalQueue.push(sensorData); //add struct to queue
         printf("Sending Data to Queue: moistureLevel1: %.2f, moistureLevel2: %.2f, moistureLevel3: %.2f, pHLevel1: %.2f, pHLevel2: %.2f, pHLevel3: %.2f, nodeId: %s\n", sensorData.moistureLevel1, sensorData.moistureLevel2, sensorData.moistureLevel3, sensorData.phLevel1, sensorData.phLevel2, sensorData.phLevel3, sensorData.nodeId.c_str());
         pthread_mutex_unlock(&queueMutex); //Unlock Mutex
