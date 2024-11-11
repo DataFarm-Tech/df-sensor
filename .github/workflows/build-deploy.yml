@@ -10,6 +10,7 @@ on:
       - lucas
       - mohnish
       - lawind
+      - main
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -33,4 +34,4 @@ jobs:
     - name: Install platformIO libraries
       run: pio lib install
     - name: Run PlatformIO
-      run: platformio run
+      run: platformio run -e compile

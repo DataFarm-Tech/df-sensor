@@ -17,7 +17,7 @@ if [ "$action" == "flash" ]; then ##OTA_ENABLED
 
 elif [ "$action" == "compile" ]; then
     echo "Performing deploy operation..."
-    sudo pio run
+    sudo pio run -e compile
 
 else
     echo "Invalid action: $action"
