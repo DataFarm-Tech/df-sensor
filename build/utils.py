@@ -8,7 +8,7 @@ def get_id() -> str:
     is_valid: bool = False
 
     while not is_valid:
-        print("Enter Controller ID: ")
+        print("Enter ID: ")
         id: str = input()
 
         if not id.isalnum() or not len(id) == 6:
