@@ -20,11 +20,11 @@ void setup(void)
 
 void loop(void)
 {
-    int humidity;
-    int ph;
-    data * rs485_data;
 
-    delay(60000);
+    static data rs485_data_struct;
+    data* rs485_data = &rs485_data_struct;
+
+    delay(1000);
     
     printf("[%s] switch to sending\n", ID);
     digitalWrite(RS485_RTS, HIGH); // Sending mode
@@ -45,11 +45,22 @@ void loop(void)
         }
     }
 
+    for (int x = 0; x < REC_DATA_LEN; x++) {  // Changed to REC_DATA_LEN
+        printf("rec_data_buffer[%d] is: 0x%02X\n", x, rec_data_buffer[x]);
+    }
+
+    
+
     if (process_rs485_msg(rec_data_buffer, rs485_data))
     {
-        printf("Humidity: %d", rs485_data->humidity);
-        printf("pH: %d", rs485_data->ph);
+    printf("Humidity: %.1f\n", rs485_data->humidity);
+    printf("Temperature: %.1f\n", rs485_data->temperature);
+    printf("Conductivity: %d\n", rs485_data->conductivity);
+    printf("pH: %.1f\n", rs485_data->ph);
+    printf("Nitrogen: %d\n", rs485_data->nitrogen);
+    printf("Phosphorus: %d\n", rs485_data->phosphorus);
+    printf("Potassium: %d\n", rs485_data->potassium);
     }
     
-    memset(rec_data_buffer, sizeof(rec_data_buffer), 0);
+    memset(rec_data_buffer, 0, sizeof(rec_data_buffer));
 }

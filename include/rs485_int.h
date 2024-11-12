@@ -11,8 +11,13 @@ extern u_int8_t rec_data_buffer[REC_DATA_LEN];
 
 // Structure to store processed data
 typedef struct {
-    int humidity; // Humidity value (e.g., 12.3)
-    int ph;       // pH value (e.g., 45.0)
+    float humidity; // Humidity value (e.g., 12.3)
+    float ph;       // pH value (e.g., 45.0)
+    float conductivity;
+    float temperature;
+    float nitrogen;
+    float phosphorus;
+    float potassium; 
 } data;
 
 // Function to process received message
