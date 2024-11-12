@@ -32,7 +32,7 @@ i
 */
 
 /* RS485 Modbus RTU Frame*/
-u_int8_t read_data_msg[] = {
+byte read_data_msg[] = {
     0x01, //Address
     0x03, //Function Code
     0x00, //Start Address (Hi) 
@@ -52,24 +52,25 @@ int process_rs485_msg(int rec_data[REC_DATA_LEN], data * rs485_data)
 reads humidity and ph from buffer, buffer holds data from rs485 read.
 prepare data to send as LoRa packet.
 */
-int process_rs485_msg(u_int8_t rec_data[], data * rs485_data)
+bool process_rs485_msg(u_int8_t rec_data[REC_DATA_LEN], data * rs485_data)
 {
     printf("[%s] processing rs485_data\n", ID);
+    //  ///////////////////////////////////////////////////////
+    //  the code below doesnt do anything, it needs to be fixed
+    // ////////////////////////////////////////////////////////
+    // if (!validate_crc(rec_data))
+    // {
+    //     printf("[%s] invalid rs485_data message\n", ID);
+    //     return 0;
+    // }
 
-    if (!validate_crc(rec_data))
-    {
-        printf("[%s] invalid rs485_data message\n", ID);
-        return 0;
-    }
-
-
-    int raw_humidity = (rec_data[3] << 8) | (rec_data[4]);
-    int raw_temperature = (rec_data[5] << 8) | (rec_data[6]);
-    int raw_conductivity = (rec_data[7] << 8) | (rec_data[8]);
-    int raw_ph = (rec_data[9] << 8) | (rec_data[10]);
-    int raw_nitrogen = (rec_data[11] << 8) | (rec_data[12]);
-    int raw_phosphorus = (rec_data[13] << 8) | (rec_data[14]);
-    int raw_potassium = (rec_data[15] << 8) | (rec_data[16]);
+    int raw_humidity = (rec_data[4] << 8) | (rec_data[5]);
+    int raw_temperature = (rec_data[6] << 8) | (rec_data[7]);
+    int raw_conductivity = (rec_data[8] << 8) | (rec_data[9]);
+    int raw_ph = (rec_data[10] << 8) | (rec_data[11]);
+    int raw_nitrogen = (rec_data[12] << 8) | (rec_data[13]);
+    int raw_phosphorus = (rec_data[14] << 8) | (rec_data[15]);
+    int raw_potassium = (rec_data[16] << 8) | (rec_data[17]);
 
     rs485_data->humidity = raw_humidity * 0.1;
     rs485_data->temperature = raw_temperature * 0.1;
@@ -96,5 +97,35 @@ int process_rs485_msg(u_int8_t rec_data[], data * rs485_data)
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-    return 1;
+    return true;
+}
+
+bool readSensor(data* rs485_data, int maxRetries) {
+    while (Serial2.available()) {
+        Serial2.read(); // Clear buffer
+    }
+
+    digitalWrite(RS485_RTS, HIGH);
+    delayMicroseconds(1000);
+    
+    Serial2.write(read_data_msg, READ_DATA_LEN);
+    Serial2.flush();
+    
+    digitalWrite(RS485_RTS, LOW);
+
+    int bytesRead = 0;
+    unsigned long startTime = millis();
+    
+    while ((millis() - startTime) < 1000 && bytesRead < REC_DATA_LEN) {
+        if (Serial2.available()) {
+            rec_data_buffer[bytesRead] = Serial2.read();
+            bytesRead++;
+        }
+    }
+
+    if (bytesRead == REC_DATA_LEN) {
+        return process_rs485_msg(rec_data_buffer, rs485_data);
+    }
+    
+    return false;
 }

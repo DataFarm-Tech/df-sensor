@@ -6,8 +6,8 @@
 
 #include <Arduino.h>
 
-extern u_int8_t read_data_msg[];
-extern u_int8_t rec_data_buffer[REC_DATA_LEN];
+extern uint8_t read_data_msg[];
+extern uint8_t rec_data_buffer[REC_DATA_LEN];
 
 // Structure to store processed data
 typedef struct {
@@ -21,6 +21,7 @@ typedef struct {
 } data;
 
 // Function to process received message
-int process_rs485_msg(u_int8_t rec_data[REC_DATA_LEN], data *rs485_data);
+bool process_rs485_msg(uint8_t rec_data[REC_DATA_LEN], data *rs485_data);
+bool readSensor(data* rs485_data, int maxRetries = 3);
 
 #endif // RS485_INT_H
