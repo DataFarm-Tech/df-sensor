@@ -6,9 +6,9 @@ from enum import Enum
 
 Import("env")
 
-# fixes the infinite configuration loop issue
-if env.IsIntegrationDump():
-    Return()
+# # fixes the infinite configuration loop issue
+# if env.IsIntegrationDump():
+#     Return()
 
 headers = {
     "Content-Type": "application/json"
