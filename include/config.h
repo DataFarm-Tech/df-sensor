@@ -14,13 +14,13 @@
 // LORA CONFIG
 #define RFM95_SS 5 // CS
 #define RFM95_RST 14 // RST
-#define RFM95_DIO0 2 // DIO0
+#define RFM95_DIO0 27 // DIO0
 #define RFM95_MOSI 23
 #define RFM95_MISO 19
 #define RFM95_SCK 18
 #define RF95_FREQ 915.0 // DO NOT CHANGE FROM 915MHZ
 
-#define MESH_ADDRESS 0x00000001  // 32-bit address, unique for each node
+#define MESH_ADDRESS 0x00000002  // 32-bit address, unique for each node
 #define MAX_NODES 0xFFFFFFFF     // Maximum number of nodes with 32-bit addressing
 #define MAX_TTL 10               // Maximum number of hops a message can take
 

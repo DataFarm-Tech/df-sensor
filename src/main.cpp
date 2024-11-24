@@ -38,39 +38,88 @@ void setup(void)
         printf("[%s] LoRa init failed\n", ID);
         delay(1000);
     }
+    printf("[%s] LoRa init success\n", ID);
 
     if (!rf95.setFrequency(RF95_FREQ)) {
         printf("[%s] Frequency set failed\n", ID);
-        while (1);
+    }
+    else {
+        printf("[%s] RF95 frequency set to: %.1f MHz\n", ID, RF95_FREQ);
     }
 
     rf95.setTxPower(23, false);
     rf95.setModemConfig(RH_RF95::Bw125Cr48Sf4096);
 
     printf("[%s] init serial console\n", ID);
+    
 }
 
 void loop(void) {
+
+    static uint8_t failCount = 0;
+    
+    // If mesh isn't responding, reset it
+    if (!mesh.available() && !mesh.init()) {
+        failCount++;
+        printf("[%s] LoRa seems unresponsive, reset attempt %d\n", ID, failCount);
+        
+        if (failCount >= 3) {  // Reset after 3 failures
+            // Reset LoRa
+            digitalWrite(RFM95_RST, LOW);
+            delay(10);
+            digitalWrite(RFM95_RST, HIGH);
+            delay(10);
+
+            while (!mesh.init()) {
+                printf("[%s] LoRa init failed\n", ID);
+                delay(1000);
+            }
+            
+            rf95.setFrequency(RF95_FREQ);
+            rf95.setTxPower(23, false);
+            rf95.setModemConfig(RH_RF95::Bw125Cr48Sf4096);
+            
+            failCount = 0;
+        }
+    } else {
+        failCount = 0;
+    }
+
+
     static data rs485_data_struct;
     data* rs485_data = &rs485_data_struct;
 
-    if (readSensor(rs485_data)) {
+    if (readSensor(rs485_data, 3)) {
         // Send the raw data array to bridge
         // Note: Using address 1 for bridge, you might want to define this in config.h
-        if (mesh.sendtoWait((uint8_t*)rs485_data, sizeof(data), 0x00000001)) {
+        printf("[%s] successfully read data, now moving onto mesh send to wait\n", ID);
+
+        if (mesh.available()) {
+            // Clear any pending messages
+            uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
+            uint8_t len = sizeof(buf);
+            uint8_t from;
+            mesh.recvfrom(buf, &len, &from);
+        }
+
+
+        if (mesh.sendto((uint8_t*)rs485_data, sizeof(data), 0x00000001)) {
+            printf("[%s] Data sent successfully\n", ID);
             // Wait for acknowledgment
             uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
             uint8_t len = sizeof(buf);
             uint8_t from;
+            /////// uncomment this if we use mesh.sendtoWait ///////
+            // if (mesh.recvfromAckTimeout(buf, &len, 2000, &from)) {
+            //     printf("[%s] Got acknowledgment from bridge\n", ID);
+            // } else {
+            //     printf("[%s] No acknowledgment from bridge\n", ID);
+            // }
             
-            if (mesh.recvfromAckTimeout(buf, &len, 2000, &from)) {
-                printf("[%s] Got acknowledgment from bridge\n", ID);
-            } else {
-                printf("[%s] No acknowledgment from bridge\n", ID);
-            }
         } else {
             printf("[%s] Send to bridge failed\n", ID);
         }
+        printf("[%s] Printing sensor data:\n", ID);
 
         // Print locally
         printf("Humidity: %.1f\n", rs485_data->humidity);
@@ -84,5 +133,5 @@ void loop(void) {
         printf("Failed to read sensor\n");
     }
     
-    delay(60000); // Wait 1 minute before next reading
+    delay(3000); // Wait 3 seconds before next reading
 }

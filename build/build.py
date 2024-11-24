@@ -6,9 +6,9 @@ from enum import Enum
 
 Import("env")
 
-# # fixes the infinite configuration loop issue
-# if env.IsIntegrationDump():
-#     Return()
+# fixes the infinite configuration loop issue
+if env.IsIntegrationDump():
+    Return()
 
 headers = {
     "Content-Type": "application/json"
@@ -38,6 +38,8 @@ else:
     
     env.Append(CPPDEFINES=[("ID", env.StringifyMacro(id))])
 
-if response.status_code != 201:
-    print(json.dumps(data, indent=4))
-    exit()
+# if response.status_code != 201:
+#     print(json.dumps(data, indent=4))
+#     exit()
+
+#  Add error handling / overwrite capability
