@@ -11,7 +11,7 @@ void setup(void)
     Serial2.begin(RS485_BAUD, SERIAL_8N1, RS485_RX, RS485_TX);
 }
 
-void loop(void) 
+void loop(void) {
 
     static data rs485_data_struct;
     data* rs485_data = &rs485_data_struct;
