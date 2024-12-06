@@ -125,6 +125,7 @@ bool readSensor(data* rs485_data, int maxRetries) {
 
     if (bytesRead == REC_DATA_LEN) {
         return process_rs485_msg(rec_data_buffer, rs485_data);
+
     }
     
     return false;
