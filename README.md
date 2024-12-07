@@ -10,7 +10,7 @@
 | ESP32       | GPIO 19           | RFM95W      | MISO           |
 | ESP32       | GPIO 18           | RFM95W      | SCK            |
 | ESP32       | GPIO 14           | RFM95W      | RST            |
-| ESP32       | GPIO 2            | RFM95W      | DIO0/IRQ       |
+| ESP32       | GPIO 27           | RFM95W      | DIO0/IRQ       |
 | ESP32       | 3.3V              | RFM95W      | VCC            |
 | ESP32       | GND               | RFM95W      | GND            |
 | ESP32       | GPIO 16           | SP3485      | TX-0           |
