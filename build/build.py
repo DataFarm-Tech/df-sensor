@@ -21,9 +21,9 @@ api_key = None
 if device == device_type.CONTROLLER:
     api_key: str = uuid.uuid4()
     print("Controller", id)
-    url = "http://194.195.255.90:80/man/add/controller"
+    url = "https://194.195.255.90:443/man/add/controller"
     data = {"controller_id": id, "api_key": str(api_key)}
-    response = requests.post(url, json=data, headers=headers)
+    response = requests.post(url, json=data, headers=headers, verify=False)
 
     env.Append(CPPDEFINES=[
     ("ID", env.StringifyMacro(id)),
@@ -32,9 +32,9 @@ if device == device_type.CONTROLLER:
 
 else:
     print("Node", id)
-    url = "http://194.195.255.90:80/man/add/node"
+    url = "https://194.195.255.90:443/man/add/node"
     data = {"nodeId": id}
-    response = requests.post(url, json=data, headers=headers)
+    response = requests.post(url, json=data, headers=headers, verify= False)
     
     env.Append(CPPDEFINES=[("ID", env.StringifyMacro(id))])
 
