@@ -52,18 +52,13 @@ int process_rs485_msg(int rec_data[REC_DATA_LEN], data * rs485_data)
 reads humidity and ph from buffer, buffer holds data from rs485 read.
 prepare data to send as LoRa packet.
 */
-bool process_rs485_msg(u_int8_t rec_data[REC_DATA_LEN], data * rs485_data)
-{
+void process_rs485_msg(u_int8_t rec_data[REC_DATA_LEN], uint8_t des_buf[13]) {
     printf("[%s] processing rs485_data\n", ID);
-    //  ///////////////////////////////////////////////////////
-    //  the code below doesnt do anything, it needs to be fixed
-    // ////////////////////////////////////////////////////////
-    // if (!validate_crc(rec_data))
-    // {
-    //     printf("[%s] invalid rs485_data message\n", ID);
-    //     return 0;
-    // }
 
+    char * nodeId = ID;
+    int len = strlen(nodeId);
+    
+    // Parse the raw data from rec_data
     int raw_humidity = (rec_data[4] << 8) | (rec_data[5]);
     int raw_temperature = (rec_data[6] << 8) | (rec_data[7]);
     int raw_conductivity = (rec_data[8] << 8) | (rec_data[9]);
@@ -72,36 +67,47 @@ bool process_rs485_msg(u_int8_t rec_data[REC_DATA_LEN], data * rs485_data)
     int raw_phosphorus = (rec_data[14] << 8) | (rec_data[15]);
     int raw_potassium = (rec_data[16] << 8) | (rec_data[17]);
 
-    rs485_data->humidity = raw_humidity * 0.1;
-    rs485_data->temperature = raw_temperature * 0.1;
-    rs485_data->conductivity = raw_conductivity;
-    rs485_data->ph = raw_ph * 0.1;
-    rs485_data->nitrogen = raw_nitrogen;
-    rs485_data->phosphorus = raw_phosphorus;
-    rs485_data->potassium = raw_potassium;
+    // Scale the numerical data accordingly
+    raw_humidity = raw_humidity * 0.1;  // Scale by 0.1
+    raw_temperature = raw_temperature * 0.1;
+    raw_ph = raw_ph * 0.1;
 
-
-    // //////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // i commented out below because its kinda redundant especially if we are doing a CRC check - lawind
-    // //////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // if (humidity > 1000)
-    // {
-    //     printf("[%s] warning: humidity calculated value above threshold.\n", ID);
-    //     humidity = 1000;
-    // }
+    // Store the numerical data into des_buf
+    des_buf[0] = raw_humidity;      // Humidity
+    des_buf[1] = raw_temperature;   // Temperature
+    des_buf[2] = raw_conductivity;  // Conductivity
+    des_buf[3] = raw_ph;            // pH
+    des_buf[4] = raw_nitrogen;      // Nitrogen
+    des_buf[5] = raw_phosphorus;    // Phosphorus
+    des_buf[6] = raw_potassium;     // Potassium
     
+    int start_pos = 7;
 
-    // humidity = humidity / 10;
-    // ph = ph / 10;
-    // //////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // //////////////////////////////////////////////////////////////////////////////////////////////////////////
+    for (int i = 0; i < len; i++)
+    {
+        if (start_pos + i < 13)
+        {
+            des_buf[start_pos + i] = (uint8_t)nodeId[i];
+        }
+        else
+        {
+            break;
+        }
+    }
 
 
-    return true;
+    // Print out the full des_buf
+    printf("Full des_buf content: ");
+    for (int i = 0; i < 13; i++) {
+        // Print each byte in hexadecimal format
+        printf("0x%02X ", des_buf[i]);
+    }
 }
 
-bool readSensor(data* rs485_data, int maxRetries) {
-    while (Serial2.available()) {
+bool read_sensor(uint8_t* rs485_data) 
+{
+    while (Serial2.available()) 
+    {
         Serial2.read(); // Clear buffer
     }
 
@@ -116,16 +122,19 @@ bool readSensor(data* rs485_data, int maxRetries) {
     int bytesRead = 0;
     unsigned long startTime = millis();
     
-    while ((millis() - startTime) < 1000 && bytesRead < REC_DATA_LEN) {
-        if (Serial2.available()) {
+    while ((millis() - startTime) < 1000 && bytesRead < REC_DATA_LEN) 
+    {
+        if (Serial2.available()) 
+        {
             rec_data_buffer[bytesRead] = Serial2.read();
             bytesRead++;
         }
     }
 
-    if (bytesRead == REC_DATA_LEN) {
-        return process_rs485_msg(rec_data_buffer, rs485_data);
-
+    if (bytesRead == REC_DATA_LEN) 
+    {
+        process_rs485_msg(rec_data_buffer, rs485_data);
+        return true;
     }
     
     return false;
