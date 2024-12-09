@@ -36,35 +36,35 @@ void setup(void)
     printf("[%s] init serial console\n", ID);
 }
 
-void loop(void) {
-    static data rs485_data_struct;
-    data* rs485_data = &rs485_data_struct;
+void loop(void) 
+{
+    uint8_t rs485_data[13];
 
-    if (readSensor(rs485_data)) 
-    {
-        printf("Humidity: %.1f\n", rs485_data->humidity);
-        printf("Temperature: %.1f\n", rs485_data->temperature);
-        printf("Conductivity: %d\n", rs485_data->conductivity);
-        printf("pH: %.1f\n", rs485_data->ph);
-        printf("Nitrogen: %d\n", rs485_data->nitrogen);
-        printf("Phosphorus: %d\n", rs485_data->phosphorus);
-        printf("Potassium: %d\n", rs485_data->potassium);
-    } 
-    else 
+    if (!read_sensor(rs485_data)) 
     {
         printf("Failed to read sensor\n");
-    }
+    } 
 
-    // Send the string data
-    if (rf95.send(rec_data_buffer, sizeof(rec_data_buffer)))  // Use strlen to get the actual length of the string
+    if (rf95.send(rs485_data, sizeof(rs485_data)))
     {
-        printf("SUCCESS\n");
+        printf("[%s] packet successfully sent\n", ID);
+        
+        // Print the sensor data values along with the nodeId
+        
+
+        Serial.printf("[%s] Humidity: %d\n", ID, rs485_data[0]);
+        Serial.printf("[%s] Temperature: %d\n", ID, rs485_data[1]);
+        Serial.printf("[%s] Conductivity: %d\n", ID, rs485_data[2]);
+        Serial.printf("[%s] pH: %d\n", ID, rs485_data[3]);
+        Serial.printf("[%s] Nitrogen: %d\n", ID, rs485_data[4]);
+        Serial.printf("[%s] Phosphorus: %d\n", ID, rs485_data[5]);
+        Serial.printf("[%s] Potassium: %d\n", ID, rs485_data[6]);
     }
     else 
     {
-        printf("error\n");
+        printf("[%s] error: unable to send packet\n", ID);
     }
     
     
-    delay(5000);
+    delay(20000);
 }
