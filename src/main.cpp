@@ -10,6 +10,12 @@ RH_RF95 rf95(RFM95_NSS, RFM95_DIO0);
 void setup(void)
 {
     Serial.begin(115200); //start serial
+
+    while (!Serial) 
+    {
+        // wait for serial to initialise
+    }
+
     Serial2.begin(RS485_BAUD, SERIAL_8N1, RS485_RX, RS485_TX);
     pinMode(RS485_RTS, OUTPUT);
     digitalWrite(RS485_RTS, LOW); // SET PIN NORMALLY LOW
@@ -28,11 +34,6 @@ void setup(void)
     rf95.setTxPower(23, false);
     rf95.setModemConfig(RH_RF95::Bw125Cr48Sf4096);
 
-    while (!Serial) 
-    {
-        // wait for serial
-    }
-
     printf("[%s] init serial console\n", ID);
 }
 
@@ -50,7 +51,6 @@ void loop(void)
         printf("[%s] packet successfully sent\n", ID);
         
         // Print the sensor data values along with the nodeId
-        
 
         Serial.printf("[%s] Humidity: %d\n", ID, rs485_data[0]);
         Serial.printf("[%s] Temperature: %d\n", ID, rs485_data[1]);
