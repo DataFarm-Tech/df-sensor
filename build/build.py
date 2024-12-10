@@ -43,8 +43,8 @@ if device == device_type.CONTROLLER:
     password: str = input()
 
 elif device == device_type.SENSOR:
-    url = "https://194.195.255.90:443/man/add/sensor"
-    data = {"node_id": id}
+    url = "https://194.195.255.90:443/man/add/node"
+    data = {"nodeId": id}
     response = requests.post(url, json=data, headers=headers, verify=False)
 
 # Print the data being sent for debugging purposes
