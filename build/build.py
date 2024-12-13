@@ -22,7 +22,7 @@ id: str = get_id()
 ota_enabled: int = 0  # Initially, OTA is disabled
 
 if device == device_type.CONTROLLER:
-    url = "https://194.195.255.90:443/man/add/controller"
+    url = "http://194.195.255.90:80/man/add/controller"
     api_key = uuid.uuid4()
     data = {"controller_id": id, "api_key": str(api_key)}
     response = requests.post(url, json=data, headers=headers, verify=False)
@@ -43,7 +43,7 @@ if device == device_type.CONTROLLER:
     password: str = input()
 
 elif device == device_type.SENSOR:
-    url = "https://194.195.255.90:443/man/add/node"
+    url = "http://194.195.255.90:80/man/add/node"
     data = {"nodeId": id}
     response = requests.post(url, json=data, headers=headers, verify=False)
 

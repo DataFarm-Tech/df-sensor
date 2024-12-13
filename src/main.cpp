@@ -1,70 +1,74 @@
-#include <Arduino.h>
-#include <SPI.h>
+#include "lora_rx_thread.h"
+#include "lora_tx_thread.h"
+#include "config.h"
+#include "types.h"
+
 #include <RH_RF95.h>
 
-#include "config.h"
-#include "rs485_int.h"
+RH_RF95 rf95(RFM95_CS, RFM95_INT); //create the rf95 obj
 
-RH_RF95 rf95(RFM95_NSS, RFM95_DIO0);
+lora_rx_thread* lora_Rx_thread = nullptr;
+lora_tx_thread* lora_Tx_thread = nullptr;
+
+std::queue<data> upload_queue;
 
 void setup(void)
 {
-    Serial.begin(115200); //start serial
+    Serial.begin(115200);
+    
+    digitalWrite(RFM95_RST, LOW);
+    delay(10);
+    digitalWrite(RFM95_RST, HIGH);
+    delay(10);
 
-    while (!Serial) 
+    printf("[%s]: lora setup ok, initialise module\n", ID);
+
+    while (!rf95.init()) 
     {
-        // wait for serial to initialise
+        printf("[%s]: LoRa radio init failed\n", ID);
     }
 
-    Serial2.begin(RS485_BAUD, SERIAL_8N1, RS485_RX, RS485_TX);
-    pinMode(RS485_RTS, OUTPUT);
-    digitalWrite(RS485_RTS, LOW); // SET PIN NORMALLY LOW
+    printf("[%s]: lora setup ok, setting lora freq\n", ID);
 
-    while (!rf95.init())
+    if (!rf95.setFrequency(RF95_FREQ)) 
     {
-        printf("Lora not connecting\n");
+        printf("[%s]: lora setup error, lora module unable to set frequency\n", ID);
+        while (1);
     }
 
-    if (!rf95.setFrequency(RF95_FREQ))
-    {
-        printf("incorrect frequency setup\n");
-        while(1);
-    }
+    printf("[%s]: lora setup established to 915 Mhz \n", ID);
+
+    printf("[%s]: lora setup, setting sync word.\n", ID);
 
     rf95.setTxPower(23, false);
     rf95.setModemConfig(RH_RF95::Bw125Cr48Sf4096);
 
-    printf("[%s] init serial console\n", ID);
+    lora_Rx_thread = new lora_rx_thread(rf95);
+    lora_Rx_thread->start();
+    
+    lora_Tx_thread = new lora_tx_thread(rf95);
+    lora_Tx_thread->start();
+
+    //init threads
+    
+    //lora_rx_thread
+    //while lora is available:
+    //  recv:
+    //if dest_node is equal to nodeId:
+
+    // case switch(msg_id):
+    //      case 0x01: (env request)
+    //      
+    // 
+    //else:
+    //    write_to_buffer()  
+    //    relay_msg()
+    //      
+
+    //lora_rx_thread
 }
 
 void loop(void) 
 {
-    uint8_t rs485_data[13];
-
-    if (!read_sensor(rs485_data)) 
-    {
-        printf("Failed to read sensor\n");
-    } 
-
-    if (rf95.send(rs485_data, sizeof(rs485_data)))
-    {
-        printf("[%s] packet successfully sent\n", ID);
-        
-        // Print the sensor data values along with the nodeId
-
-        Serial.printf("[%s] Humidity: %d\n", ID, rs485_data[0]);
-        Serial.printf("[%s] Temperature: %d\n", ID, rs485_data[1]);
-        Serial.printf("[%s] Conductivity: %d\n", ID, rs485_data[2]);
-        Serial.printf("[%s] pH: %d\n", ID, rs485_data[3]);
-        Serial.printf("[%s] Nitrogen: %d\n", ID, rs485_data[4]);
-        Serial.printf("[%s] Phosphorus: %d\n", ID, rs485_data[5]);
-        Serial.printf("[%s] Potassium: %d\n", ID, rs485_data[6]);
-    }
-    else 
-    {
-        printf("[%s] error: unable to send packet\n", ID);
-    }
-    
-    
-    delay(20000);
+    //
 }
