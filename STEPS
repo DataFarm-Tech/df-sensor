@@ -1,0 +1,42 @@
+1. Listen for lora msg
+2. If it passes CRC check then continue
+3. Extract src, dest, data
+4. if dest == sensors_nodeId then process it, else relay to next node (send_packet())
+5. when process packet, send a packet back to the src node with data attached.
+
+
+- Create a thread that constantly listens for lora messages
+- read data from lora into buffer
+- then pass buffer into crc check (if crc check passes then continue)
+- retrieving src, dest, data
+
+
+
+Lucas Aponso
+- Create a thread that constantly listens for lora messages
+- read data from lora into buffer
+- then pass buffer into crc check (if crc check passes then continue)
+
+
+
+
+https://www.airspayce.com/mikem/arduino/RadioHead/classRH__RF95.html
+    ^ Class Reference
+    
+RH_RF95.h
+
+then retrieve src, dest and data
+- function 1: retrieve data, returns data from sensor
+- function 2: combine lora listener (src, and dest is within) with funciton 1 (data).
+
+Mohnish Deshpande
+
+4. if dest == sensors_nodeId then process it, else relay to next node (send_packet())
+5. when process packet, send a packet back to the src node with data attached.
+
+    total: 21 bytes
+
+    0-5 dest
+    6-12 src
+    13-19 data
+    20-21 crc 2 bytes 

@@ -1,85 +1,60 @@
 #include "lora_rx_thread.h"
-#include "config.h"  // For ID
-#include <RH_RF95.h>  // For LoRa radio functions
-#include "types.h"
+#include "config.h"
 
-lora_rx_thread* lora_rx_thread::_instance = nullptr;
+#include <SPI.h>
+#include <RH_RF95.h>
 
-lora_rx_thread::lora_rx_thread(RH_RF95& rf95): _rf95(rf95), _taskHandle(nullptr), _isRunning(false) 
+
+RH_RF95 rf95(RFM95_NSS, RFM95_INT); // Create the rf95 obj
+
+void setup_lora()
 {
-    // Create the mutex for synchronizing access to the queue
-    _queueMutex = xSemaphoreCreateMutex();
-    _instance = this;   
-}
-
-void lora_rx_thread::start() 
-{
-    if (!_isRunning) 
+    while (!rf95.init())
     {
-        _isRunning = true;
-        // Create the task pinned to a core (core 0 in this case)
-        xTaskCreatePinnedToCore(
-            rx_thread,        // Task function
-            "lora_rx_thread", // Task name
-            10000,            // Stack size (bytes)
-            this,             // Parameter to pass to the thread (this thread instance)
-            1,                // Task priority
-            &_taskHandle,     // Task handle
-            0                 // Core where the task should run (core 0)
-        );
-        printf("[%s]: LoRa listener task created\n", ID);
+        printf("[%s]: LoRa radio init failed\n", NODE_ID);
     }
-}
 
-void lora_rx_thread::stop() 
-{
-    if (_isRunning && _taskHandle != nullptr) 
+    printf("[%s]: LoRa setup ok, setting LoRa frequency\n", NODE_ID);
+
+    if (!rf95.setFrequency(RF95_FREQ)) 
     {
-        _isRunning = false;
-        vTaskDelete(_taskHandle);  // Delete the task
-        _taskHandle = nullptr;
+        printf("[%s]: LoRa setup error, LoRa module unable to set frequency\n", NODE_ID);
+        while (1);
     }
+
+    printf("[%s]: LoRa setup established to 915 MHz\n", NODE_ID);
+
+    printf("[%s]: LoRa setup, setting sync word.\n", NODE_ID);
+
+    rf95.setTxPower(23, false);
+    rf95.setModemConfig(RH_RF95::Bw125Cr48Sf4096);
 }
 
-void lora_rx_thread::rx_thread(void* parameter) 
+/*
+TODO: write thread to listen to lora msg
+*/
+void lora_listener(void* parameter)
 {
-    lora_rx_thread* listener = static_cast<lora_rx_thread*>(parameter);
-    
-    while (listener->_isRunning) 
+    while(1) 
     {
-        // Check if data is available
-        if (listener->_rf95.available()) 
+        if (rf95.available()) 
         {
-            uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
-            uint8_t len = sizeof(buf);
+            uint8_t rec_buf[RH_RF95_MAX_MESSAGE_LEN];
+            uint8_t buf_len = sizeof(rec_buf);
             
-            // Receive the message
-            if (listener->_rf95.recv(buf, &len)) 
-            {
-                printf("msg rec\n");
-
-                // Lock the mutex before modifying the shared queue
-                if (xSemaphoreTake(listener->_queueMutex, portMAX_DELAY) == pdTRUE) 
+            if (rf95.recv(rec_buf, &buf_len))
+            {                
+                //TODO: what happens when we rec
+                for (int i=0; i < buf_len; i++)
                 {
-                    data receivedData;
-                    receivedData.humidity = 2;
-                    receivedData.temperature = 3;
-                    receivedData.conductivity = 9;
-                    receivedData.ph = 13;
-                    receivedData.nitrogen = 98;
-                    receivedData.phosphorus = 98;
-                    receivedData.potassium = 22;
-                    receivedData.nodeId = "Hello";
-
-
-                    upload_queue.push(receivedData);
-                    // Unlock the mutex after updating the shared resource
-                    xSemaphoreGive(listener->_queueMutex);
+                    printf("%x", rec_buf[i]);
                 }
+                printf("\n");
             }
         }
-        vTaskDelay(pdMS_TO_TICKS(10));  // Delay to prevent task overload
+        
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
-    
-    vTaskDelete(NULL);  // Delete the task when finished
+
+    vTaskDelete(NULL);
 }
