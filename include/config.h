@@ -16,11 +16,13 @@
 #define RFM95_SCK 18
 #define RF95_FREQ 915.0 // DO NOT CHANGE FROM 915MHZ
 
-#define NODE_ID "testN1"
+#define NODE_ID "ddse32"
 
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
 #define ADDRESS_SIZE 6
 #define MEMORY_CMP_SUCCESS 0
+
+#define LORA_DATA_LEN 21
 
 #endif // CONFIG_H

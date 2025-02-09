@@ -37,6 +37,6 @@ Mohnish Deshpande
     total: 21 bytes
 
     0-5 dest
-    6-12 src
-    13-19 data
-    20-21 crc 2 bytes 
+    6-11 src
+    12-18 data
+    19-20 crc 2 bytes 

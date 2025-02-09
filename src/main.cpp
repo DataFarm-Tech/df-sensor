@@ -19,16 +19,5 @@ void setup()
 
 void loop()
 {
-    uint8_t rs485_data[13];
-    read_sensor(rs485_data);
-
-    Serial.printf("[%s] Humidity: %d\n", NODE_ID, rs485_data[0]);
-    Serial.printf("[%s] Temperature: %d\n", NODE_ID, rs485_data[1]);
-    Serial.printf("[%s] Conductivity: %d\n", NODE_ID, rs485_data[2]);
-    Serial.printf("[%s] pH: %d\n", NODE_ID, rs485_data[3]);
-    Serial.printf("[%s] Nitrogen: %d\n", NODE_ID, rs485_data[4]);
-    Serial.printf("[%s] Phosphorus: %d\n", NODE_ID, rs485_data[5]);
-    Serial.printf("[%s] Potassium: %d\n", NODE_ID, rs485_data[6]);
-
     delay(5000);
 }

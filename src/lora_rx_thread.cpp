@@ -1,5 +1,6 @@
 #include "lora_rx_thread.h"
 #include "config.h"
+#include "sensor_int.h"
 
 #include <SPI.h>
 #include <RH_RF95.h>
@@ -8,6 +9,7 @@ RH_RF95 rf95(RFM95_NSS, RFM95_INT); // Create the rf95 obj
 
 void lora_listener(void *parameter);
 void swap_src_dest_addresses(uint8_t buffer[]);
+void send_packet(uint8_t lora_data_tx[]);
 
 void setup_lora()
 {
@@ -42,24 +44,35 @@ void lora_listener(void *parameter)
     {
         if (rf95.available())
         {
-            uint8_t rec_buf[RH_RF95_MAX_MESSAGE_LEN];
-            uint8_t buf_len = sizeof(rec_buf);
+            uint8_t lora_data_rx[RH_RF95_MAX_MESSAGE_LEN];
+            uint8_t buf_len = sizeof(lora_data_rx);
 
-            if (rf95.recv(rec_buf, &buf_len))
+            if (rf95.recv(lora_data_rx, &buf_len))
             {
-                printf("buf_len: %d\n", buf_len);
-                printf("rec_buf: %s\n", rec_buf);
-                // if (memcmp(rec_buf, NODE_ID, ADDRESS_SIZE) == MEMORY_CMP_SUCCESS)
-                if(true)
+                printf("lora_data_rx: %s\n", lora_data_rx);
+                if (memcmp(lora_data_rx, NODE_ID, ADDRESS_SIZE) == MEMORY_CMP_SUCCESS)
+                // if (true)
                 {
+                    printf("Lora packet received\n");
                     // process packet
-                    // read from sensor
+                    bool res = read_sensor(lora_data_rx);
+                    if (res)
+                        printf("Sensor reading worked\n");
+
                     // swap src and dest addresses
-                    swap_src_dest_addresses(rec_buf);
+                    swap_src_dest_addresses(lora_data_rx);
                 }
-                printf("rec_buf: %s\n", rec_buf);
+                printf("lora_data_rx: %s\n", lora_data_rx);
+                printf("%d ", lora_data_rx[12]);
+                printf("%d ", lora_data_rx[13]);
+                printf("%d ", lora_data_rx[14]);
+                printf("%d ", lora_data_rx[15]);
+                printf("%d ", lora_data_rx[16]);
+                printf("%d ", lora_data_rx[17]);
+                printf("%d ", lora_data_rx[18]);
 
                 // send packet
+                send_packet(lora_data_rx);
             }
         }
 
@@ -69,10 +82,23 @@ void lora_listener(void *parameter)
     vTaskDelete(NULL);
 }
 
+// TODO: move this to utils
 void swap_src_dest_addresses(uint8_t buffer[])
 {
     uint8_t tmp[ADDRESS_SIZE];
     memcpy(tmp, buffer, ADDRESS_SIZE);
     memcpy(buffer, buffer + ADDRESS_SIZE, ADDRESS_SIZE);
     memcpy(buffer + ADDRESS_SIZE, tmp, ADDRESS_SIZE);
+}
+
+void send_packet(uint8_t lora_data_tx[])
+{
+    if (rf95.send(lora_data_tx, LORA_DATA_LEN))
+    {
+        printf("Packet sent\n");
+    }
+    else
+    {
+        printf("Packet failed\n");
+    }
 }
