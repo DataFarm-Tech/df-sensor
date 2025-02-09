@@ -3,8 +3,7 @@
 #include "config.h"
 #include "sensor_int.h"
 
-
-TaskHandle_t lora_listener_th; //thread handler for lora listen thread
+TaskHandle_t lora_listener_th; // thread handler for lora listen thread
 
 void setup()
 {
@@ -15,7 +14,7 @@ void setup()
 
     printf("[%s]: starting serial console\n", NODE_ID);
     printf("[%s]: init lora listen thread\n", NODE_ID);
-    xTaskCreatePinnedToCore(lora_listener, "lora_listener", 10000, NULL, 1, &lora_listener_th, 0); //create lora listen thread
+    xTaskCreatePinnedToCore(lora_listener, "lora_listener", 10000, NULL, 1, &lora_listener_th, 0); // create lora listen thread
 }
 
 void loop()
@@ -32,5 +31,4 @@ void loop()
     Serial.printf("[%s] Potassium: %d\n", NODE_ID, rs485_data[6]);
 
     delay(5000);
-
 }

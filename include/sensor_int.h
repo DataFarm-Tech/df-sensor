@@ -2,7 +2,7 @@
 #define SENSOR_INT_H
 
 #define READ_DATA_LEN 8
-#define REC_DATA_LEN 19
+#define REC_DATA_LEN 21
 
 #include <Arduino.h>
 
