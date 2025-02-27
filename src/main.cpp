@@ -5,6 +5,9 @@
 
 TaskHandle_t lora_listener_th; // thread handler for lora listen thread
 
+/*
+init lora config and rs485 setup
+*/
 void setup()
 {
     sleep(2);
@@ -17,6 +20,9 @@ void setup()
     xTaskCreatePinnedToCore(lora_listener, "lora_listener", 10000, NULL, 1, &lora_listener_th, 0); // create lora listen thread
 }
 
+/*
+Infinite Loop
+*/
 void loop()
 {
     delay(5000);

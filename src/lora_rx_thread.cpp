@@ -23,8 +23,7 @@ void setup_lora()
     if (!rf95.setFrequency(RF95_FREQ))
     {
         printf("[%s]: LoRa setup error, LoRa module unable to set frequency\n", NODE_ID);
-        while (1)
-            ;
+        while (1);
     }
 
     printf("[%s]: LoRa setup established to 915 MHz\n", NODE_ID);
@@ -51,10 +50,7 @@ void lora_listener(void *parameter)
             {
                 printf("lora_data_rx: %s\n", lora_data_rx);
                 if (memcmp(lora_data_rx, NODE_ID, ADDRESS_SIZE) == MEMORY_CMP_SUCCESS)
-                // if (true)
                 {
-                    printf("Lora packet received\n");
-                    // process packet
                     bool res = read_sensor(lora_data_rx);
                     if (res)
                         printf("Sensor reading worked\n");

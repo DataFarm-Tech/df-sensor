@@ -16,7 +16,7 @@
 #define RFM95_SCK 18
 #define RF95_FREQ 915.0 // DO NOT CHANGE FROM 915MHZ
 
-#define NODE_ID "ddse32"
+#define NODE_ID "12345d"
 
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1

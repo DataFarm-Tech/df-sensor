@@ -1,49 +1,27 @@
 #include <Arduino.h>
 #include "sensor_int.h"
 #include "config.h"
+
+#define HUMIDITY_L 4
+#define HUMIDITY_H 5
+#define TEMPERATURE_L 6
+#define TEMPERATURE_H 7
+#define CONDUCTIVITY_L 8
+#define CONDUCTIVITY_H 9
+#define PH_L 10
+#define PH_H 11
+#define NITROGEN_L 12
+#define NITROGEN_H 13
+#define PHOSPHORUS_L 14
+#define PHOSPHORUS_H 15
+#define POTASSIUM_L 16
+#define POTASSIUM_H 17
+
 /*
 RS485 Read Message Definition
 */
 
-/*
-i
-
-0  -> 0x01 (Address)
-1  -> 0x03 (Function Code)
-2  -> 0x0E (Number of Byte)
-3  -> 0x01 (Humidity) L
-4  -> 0xD0 (Humidity) H
-5  -> 0x01 (Temp) L
-6  -> 0x4C (Temp) H
-7  -> 0x00 (Conductivity) L
-8  -> 0x2C (Conductivity) H
-9  -> 0x00 (PH) L
-10 -> 0x5A (PH) H
-11 -> 0x00 (N) L
-12 -> 0x20 (N) H
-13 -> 0x00 (P) L
-14 -> 0x58 (P) H
-15 -> 0x00 (K) L
-16 -> 0x68 (K) H
-17 -> 0x70 (CRC) L
-18 -> 0x29 (CRC) H
-*/
-
-#define HUMIDITY_L 3
-#define HUMIDITY_H 4
-#define TEMPERATURE_L 5
-#define TEMPERATURE_H 6
-#define CONDUCTIVITY_L 7
-#define CONDUCTIVITY_H 8
-#define PH_L 9
-#define PH_H 10
-#define NITROGEN_L 11
-#define NITROGEN_H 12
-#define PHOSPHORUS_L 13
-#define PHOSPHORUS_H 14
-#define POTASSIUM_L 15
-#define POTASSIUM_H 16
-
+//RS485 Modbus RTU Frame
 #define ADDR 0x01
 #define FUNC_CODE 0x03
 #define START_ADDR_H 0x00
@@ -64,7 +42,8 @@ byte read_data_msg[] = {
     CRC_L,        // Error Check (Lo)
     CRC_H         // Error Check (Hi)
 };
-// for further info see -> docs/rs485_comms_datasheet.pdf
+// for further info see -> docs/rs485_comms_datasheet.pdf or README.md
+
 
 /*
 int process_rs485_msg(int rs485_data[RS485_DATA_LEN], data * rs485_data)
@@ -74,38 +53,27 @@ prepare data to send as LoRa packet.
 */
 void process_rs485_msg(uint8_t rs485_data[], uint8_t lora_data_rx[])
 {
-    Serial.printf("[%s] Humidity: %d\n", NODE_ID, rs485_data[0]);
-    Serial.printf("[%s] Temperature: %d\n", NODE_ID, rs485_data[1]);
-    Serial.printf("[%s] Conductivity: %d\n", NODE_ID, rs485_data[2]);
-    Serial.printf("[%s] pH: %d\n", NODE_ID, rs485_data[3]);
-    Serial.printf("[%s] Nitrogen: %d\n", NODE_ID, rs485_data[4]);
-    Serial.printf("[%s] Phosphorus: %d\n", NODE_ID, rs485_data[5]);
-    Serial.printf("[%s] Potassium: %d\n", NODE_ID, rs485_data[6]);
-
     printf("[%s] processing rs485_data\n", NODE_ID);
 
     // Parse the raw data from rs485_data
-    int raw_humidity = (rs485_data[4] << 8) | (rs485_data[5]);
-    int raw_temperature = (rs485_data[6] << 8) | (rs485_data[7]);
-    int raw_conductivity = (rs485_data[8] << 8) | (rs485_data[9]);
-    int raw_ph = (rs485_data[10] << 8) | (rs485_data[11]);
-    int raw_nitrogen = (rs485_data[12] << 8) | (rs485_data[13]);
-    int raw_phosphorus = (rs485_data[14] << 8) | (rs485_data[15]);
-    int raw_potassium = (rs485_data[16] << 8) | (rs485_data[17]);
-    // int raw_humidity = (rs485_data[HUMIDITY_L] << 8) | (rs485_data[HUMIDITY_H]);
-    // int raw_temperature = (rs485_data[TEMPERATURE_L] << 8) | (rs485_data[TEMPERATURE_H]);
-    // int raw_conductivity = (rs485_data[CONDUCTIVITY_L] << 8) | (rs485_data[CONDUCTIVITY_H]);
-    // int raw_ph = (rs485_data[PH_L] << 8) | (rs485_data[PH_H]);
-    // int raw_nitrogen = (rs485_data[NITROGEN_L] << 8) | (rs485_data[NITROGEN_H]);
-    // int raw_phosphorus = (rs485_data[PHOSPHORUS_L] << 8) | (rs485_data[PHOSPHORUS_H]);
-    // int raw_potassium = (rs485_data[POTASSIUM_L] << 8) | (rs485_data[POTASSIUM_H]);
+    int raw_humidity = (rs485_data[HUMIDITY_L] << 8) | (rs485_data[HUMIDITY_H]);
+    int raw_temperature = (rs485_data[TEMPERATURE_L] << 8) | (rs485_data[TEMPERATURE_H]);
+    int raw_conductivity = (rs485_data[CONDUCTIVITY_L] << 8) | (rs485_data[CONDUCTIVITY_H]);
+    int raw_ph = (rs485_data[PH_L] << 8) | (rs485_data[PH_H]);
+    int raw_nitrogen = (rs485_data[NITROGEN_L] << 8) | (rs485_data[NITROGEN_H]);
+    int raw_phosphorus = (rs485_data[PHOSPHORUS_L] << 8) | (rs485_data[PHOSPHORUS_H]);
+    int raw_potassium = (rs485_data[POTASSIUM_L] << 8) | (rs485_data[POTASSIUM_H]);
+
+    // Print out the raw sensor data
+    printf("Raw Data - Humidity: %d, Temperature: %d, Conductivity: %d, PH: %d, Nitrogen: %d, Phosphorus: %d, Potassium: %d\n",
+           raw_humidity, raw_temperature, raw_conductivity, raw_ph, raw_nitrogen, raw_phosphorus, raw_potassium);
 
     // Scale the numerical data accordingly
     raw_humidity = raw_humidity * 0.1; // Scale by 0.1
     raw_temperature = raw_temperature * 0.1;
     raw_ph = raw_ph * 0.1;
 
-    // write the data to the 7 bytes in the lora data that correspond to the values
+    // Write the data to the 7 bytes in the lora data that correspond to the values
     lora_data_rx[2 * ADDRESS_SIZE + 0] = raw_humidity;
     lora_data_rx[2 * ADDRESS_SIZE + 1] = raw_temperature;
     lora_data_rx[2 * ADDRESS_SIZE + 2] = raw_conductivity;
@@ -113,6 +81,11 @@ void process_rs485_msg(uint8_t rs485_data[], uint8_t lora_data_rx[])
     lora_data_rx[2 * ADDRESS_SIZE + 4] = raw_nitrogen;
     lora_data_rx[2 * ADDRESS_SIZE + 5] = raw_phosphorus;
     lora_data_rx[2 * ADDRESS_SIZE + 6] = raw_potassium;
+
+    // Print out the final values being stored into the LoRa packet
+    printf("Final Data to send: Humidity: %d, Temperature: %d, Conductivity: %d, PH: %d, Nitrogen: %d, Phosphorus: %d, Potassium: %d\n",
+           lora_data_rx[2 * ADDRESS_SIZE + 0], lora_data_rx[2 * ADDRESS_SIZE + 1], lora_data_rx[2 * ADDRESS_SIZE + 2],
+           lora_data_rx[2 * ADDRESS_SIZE + 3], lora_data_rx[2 * ADDRESS_SIZE + 4], lora_data_rx[2 * ADDRESS_SIZE + 5], lora_data_rx[2 * ADDRESS_SIZE + 6]);
 }
 
 bool read_sensor(uint8_t lora_data_rx[])
@@ -152,14 +125,6 @@ bool read_sensor(uint8_t lora_data_rx[])
         return true;
     }
 
-    printf("Printing the values in read sensor\n");
-    Serial.printf("[%s] Humidity: %d\n", NODE_ID, rs485_data[0]);
-    Serial.printf("[%s] Temperature: %d\n", NODE_ID, rs485_data[1]);
-    Serial.printf("[%s] Conductivity: %d\n", NODE_ID, rs485_data[2]);
-    Serial.printf("[%s] pH: %d\n", NODE_ID, rs485_data[3]);
-    Serial.printf("[%s] Nitrogen: %d\n", NODE_ID, rs485_data[4]);
-    Serial.printf("[%s] Phosphorus: %d\n", NODE_ID, rs485_data[5]);
-    Serial.printf("[%s] Potassium: %d\n", NODE_ID, rs485_data[6]);
 
     return false;
 }
