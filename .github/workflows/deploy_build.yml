@@ -1,0 +1,53 @@
+name: CI Production Build
+
+on:
+  push:
+    branches:
+      - mesh
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python ##install latest version of python
+        uses: actions/setup-python@v2
+
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          sudo pip install platformio
+
+      - name: Install PlatformIO Libraries
+        run: sudo pio lib install
+
+      - name: Run PlatformIO
+        run: ./flash.sh compile
+
+      - name: Archive Firmware
+        run: |
+          ls .pio/build/compile/.
+          mkdir -p firmware
+          cp .pio/build/compile/firmware.bin firmware/firmware.bin
+          ls firmware/firmware.bin
+
+      - name: Create GitHub release
+        id: create-new-release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.run_number }}
+          release_name: Release ${{ github.run_number }}
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-new-release.outputs.upload_url }}
+          asset_path: firmware/firmware.bin
+          asset_name: site-v${{ github.run_number }}.bin
+          asset_content_type: application/octet
