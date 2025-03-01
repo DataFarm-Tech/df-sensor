@@ -17,32 +17,115 @@
 #define POTASSIUM_L 16
 #define POTASSIUM_H 17
 
-/*
-RS485 Read Message Definition
-*/
+#define RS485_POLL_LEN 7
 
-//RS485 Modbus RTU Frame
-#define ADDR 0x01
-#define FUNC_CODE 0x03
-#define START_ADDR_H 0x00
-#define START_ADDR_L 0x00
-#define NUM_POINTS_H 0x00
-#define NUM_POINTS_L 0x07
-#define CRC_L 0x04
-#define CRC_H 0x08
+int is_rs485_alive = 0;
+
 
 /* RS485 Modbus RTU Frame*/
 byte read_data_msg[] = {
-    ADDR,         // Address
-    FUNC_CODE,    // Function Code
-    START_ADDR_H, // Start Address (Hi)
-    START_ADDR_L, // Start Address (Lo)
-    NUM_POINTS_H, // Number of Points (Hi)
-    NUM_POINTS_L, // Number of Points (Lo)
-    CRC_L,        // Error Check (Lo)
-    CRC_H         // Error Check (Hi)
+    0x01,         // Address
+    0x03,    // Function Code
+    0x00, // Start Address (Hi)
+    0x00, // Start Address (Lo)
+    0x00, // Number of Points (Hi)
+    0x07, // Number of Points (Lo)
+    0x04,        // Error Check (Lo)
+    0x08         // Error Check (Hi)
 };
 // for further info see -> docs/rs485_comms_datasheet.pdf or README.md
+
+
+byte poll_rs485_int[] = {
+    0xFF,         // Address
+    0x03,    // Function Code
+    0x07, // Start Address (Hi)
+    0xD0, // Start Address (Lo)
+    0x00, // Number of Points (Hi)
+    0x01, // Number of Points (Lo)
+    0x91,        // Error Check (Lo)
+    0x59         // Error Check (Hi)
+};
+
+
+void rs485_poll(void *parameter)
+{
+    int bytes_recv;
+    unsigned long start_time;
+    uint8_t poll_result[7];
+
+    while (1)
+    {
+        bytes_recv = 0;
+        start_time = millis();
+
+        digitalWrite(RS485_RTS, HIGH); //open comms
+        delayMicroseconds(1000);
+
+        while (Serial2.available())
+        {
+            Serial2.read(); // Clear buffer
+        }
+
+        Serial2.write(poll_rs485_int, 8);
+        Serial2.flush();
+
+        digitalWrite(RS485_RTS, LOW); //close comms
+        delayMicroseconds(1000);
+
+        while (((millis() - start_time) < 1000) && (bytes_recv < sizeof(poll_result)))
+        {
+            if (Serial2.available())
+            {
+                poll_result[bytes_recv] = Serial2.read();
+                bytes_recv++;
+            }
+        }
+
+        if (bytes_recv == sizeof(poll_result))
+        {
+            //Set is_rs485_alive to true/0
+            is_rs485_alive = 1;
+        }
+    }
+}
+
+
+void read_sensor(uint8_t lora_data_rx[])
+{  
+    uint8_t rs485_data[RS485_DATA_LEN];
+    int bytes_recv = 0;
+    unsigned long start_time = millis();
+
+
+    while (Serial2.available())
+    {
+        Serial2.read(); // Clear buffer
+    }
+
+
+    Serial2.write(poll_rs485_int, READ_DATA_LEN);
+    Serial2.flush();
+    
+    digitalWrite(RS485_RTS, LOW);
+    delayMicroseconds(1000);
+    
+    while (((millis() - start_time) < 1000) && (bytes_recv < READ_DATA_LEN))
+    {
+        if (Serial2.available())
+        {
+            rs485_data[bytes_recv] = Serial2.read();
+            bytes_recv++;
+        }
+    }
+
+    // process
+    if (bytes_recv == RS485_DATA_LEN)
+    {
+        process_rs485_msg(rs485_data, lora_data_rx);
+        return;
+    }
+}
 
 
 /*
@@ -86,47 +169,6 @@ void process_rs485_msg(uint8_t rs485_data[], uint8_t lora_data_rx[])
     printf("Final Data to send: Humidity: %d, Temperature: %d, Conductivity: %d, PH: %d, Nitrogen: %d, Phosphorus: %d, Potassium: %d\n",
            lora_data_rx[2 * ADDRESS_SIZE + 0], lora_data_rx[2 * ADDRESS_SIZE + 1], lora_data_rx[2 * ADDRESS_SIZE + 2],
            lora_data_rx[2 * ADDRESS_SIZE + 3], lora_data_rx[2 * ADDRESS_SIZE + 4], lora_data_rx[2 * ADDRESS_SIZE + 5], lora_data_rx[2 * ADDRESS_SIZE + 6]);
-}
-
-bool read_sensor(uint8_t lora_data_rx[])
-{
-    uint8_t rs485_data[RS485_DATA_LEN];
-
-    while (Serial2.available())
-    {
-        Serial2.read(); // Clear buffer
-    }
-    digitalWrite(RS485_RTS, HIGH);
-    delayMicroseconds(1000);
-
-    Serial2.write(read_data_msg, READ_DATA_LEN);
-    Serial2.flush();
-
-    digitalWrite(RS485_RTS, LOW);
-
-    int bytesRead = 0;
-    unsigned long startTime = millis();
-
-    while ((millis() - startTime) < 1000 && bytesRead < RS485_DATA_LEN)
-    {
-        if (Serial2.available())
-        {
-            printf("Serial2.read()\n");
-            rs485_data[bytesRead] = Serial2.read();
-            bytesRead++;
-        }
-    }
-
-    printf("Bytes read: %d\n", bytesRead);
-    // process
-    if (bytesRead == RS485_DATA_LEN)
-    {
-        process_rs485_msg(rs485_data, lora_data_rx);
-        return true;
-    }
-
-
-    return false;
 }
 
 void init_rs485()

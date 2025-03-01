@@ -39,7 +39,7 @@ TODO: write thread to listen to lora msg
 */
 void lora_listener(void *parameter)
 {
-    while (true)
+    while (1)
     {
         if (rf95.available())
         {
@@ -48,25 +48,19 @@ void lora_listener(void *parameter)
 
             if (rf95.recv(lora_data_rx, &buf_len))
             {
-                printf("lora_data_rx: %s\n", lora_data_rx);
                 if (memcmp(lora_data_rx, NODE_ID, ADDRESS_SIZE) == MEMORY_CMP_SUCCESS)
                 {
-                    bool res = read_sensor(lora_data_rx);
-                    if (res)
-                        printf("Sensor reading worked\n");
+                    if (!is_rs485_alive)
+                    {
+                        //output LED to RED
+                        printf("rs485 has died\n");
+                        vTaskDelete(NULL); // Delete the current task
+                    }
 
-                    // swap src and dest addresses
+                    read_sensor(lora_data_rx);
                     swap_src_dest_addresses(lora_data_rx);
                 }
-                printf("lora_data_rx: %s\n", lora_data_rx);
-                printf("%d ", lora_data_rx[12]);
-                printf("%d ", lora_data_rx[13]);
-                printf("%d ", lora_data_rx[14]);
-                printf("%d ", lora_data_rx[15]);
-                printf("%d ", lora_data_rx[16]);
-                printf("%d ", lora_data_rx[17]);
-                printf("%d ", lora_data_rx[18]);
-
+                
                 // send packet
                 send_packet(lora_data_rx);
             }
