@@ -60,7 +60,8 @@ void lora_listener(void *parameter)
                 {
                     if (!is_rs485_alive)
                     {
-                        //TODO: output LED to RED
+                        pinMode(RS485_STATUS_ERROR, OUTPUT);
+                        digitalWrite(RS485_STATUS_ERROR, HIGH);
 
                         printf("rs485 has died\n");
                         vTaskDelete(NULL); // Delete the current task

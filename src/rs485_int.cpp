@@ -51,7 +51,27 @@ byte poll_rs485_int[] = {
 // for further info see -> docs/rs485_comms_datasheet.pdf or README.md
 
 void process_rs485_msg(uint8_t rs485_data[], uint8_t lora_data_rx[]);
+void open_rs485_port(void);
+void close_rs485_port(void);
 
+
+
+void open_rs485_port(void)
+{
+    digitalWrite(RS485_RTS, HIGH); //open comms
+    delayMicroseconds(1000);
+
+    while (Serial2.available())
+    {
+        Serial2.read(); // Clear buffer
+    }
+}
+
+void close_rs485_port(void)
+{
+    digitalWrite(RS485_RTS, LOW); //close comms
+    delayMicroseconds(1000);
+}
 
 /**
  * @brief Sends a polling request over RS485 to check if the device is alive.
@@ -72,19 +92,12 @@ void rs485_poll(void *parameter)
         {
             start_time = millis();
             
-            digitalWrite(RS485_RTS, HIGH); //open comms
-            delayMicroseconds(1000);
-    
-            while (Serial2.available())
-            {
-                Serial2.read(); // Clear buffer
-            }
+            open_rs485_port();
     
             Serial2.write(poll_rs485_int, sizeof(poll_rs485_int));
             Serial2.flush();
     
-            digitalWrite(RS485_RTS, LOW); //close comms
-            delayMicroseconds(1000);
+            close_rs485_port();
     
             while (((millis() - start_time) < 1000) && (bytes_recv < sizeof(poll_result)))
             {

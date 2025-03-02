@@ -3,6 +3,9 @@
 
 #define BAUD_RATE 115200
 
+#define RS485_STATUS_OK 9
+#define RS485_STATUS_ERROR 10
+
 #define RS485_RX 16
 #define RS485_TX 17
 #define RS485_RTS 4
