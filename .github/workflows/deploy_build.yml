@@ -40,7 +40,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v$(date +'%Y%m%d')
+          tag_name: ${{ github.run_number }}
           release_name: Release $(date +'%Y-%m-%d')
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
