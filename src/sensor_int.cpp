@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "sensor_int.h"
 #include "config.h"
+#include "utils.h"
 
 #define HUMIDITY_L 4
 #define HUMIDITY_H 5
@@ -89,6 +90,11 @@ void rs485_poll(void *parameter)
                 }
             }
             
+            if (!compute_crc16(poll_result, bytes_recv))
+            {
+                printf("crc invalid\n");
+            }
+            
             if (bytes_recv == sizeof(poll_result))
             {
                 is_rs485_alive = 1;
@@ -136,6 +142,11 @@ void read_sensor(uint8_t lora_data_rx[])
                 rs485_data[bytes_recv] = Serial2.read();
                 bytes_recv++;
             }
+        }
+
+        if (!compute_crc16(rs485_data, bytes_recv))
+        {
+            printf("crc invalid\n");
         }
     
         if (bytes_recv == sizeof(rs485_data))
