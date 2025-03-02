@@ -33,6 +33,8 @@ jobs:
           mkdir -p firmware
           cp .pio/build/compile/firmware.bin firmware/firmware.bin
           ls firmware/firmware.bin
+      - name: Set release date
+        run: echo "RELEASE_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
 
       - name: Create GitHub release
         id: create-new-release
@@ -40,8 +42,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.run_number }}
-          release_name: Release $(date +'%Y-%m-%d')
+          tag_name: v${{ env.RELEASE_DATE }}
+          release_name: Release ${{ env.RELEASE_DATE }}
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         env:
@@ -51,3 +53,4 @@ jobs:
           asset_path: firmware/firmware.bin
           asset_name: site-v${{ github.run_number }}.bin
           asset_content_type: application/octet
+
