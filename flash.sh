@@ -17,11 +17,11 @@ function display_help {
     echo "  $0 clean   : Clean the build environment."
     echo
     echo "If no argument is provided, or more than one, the script will exit with a usage message."
-    echo "Note: To configure the upload_port, baud_rate and libs. Configure the platformio.ini file."
+    echo "Note: To configure the upload_port, baud_rate, and libs, modify the platformio.ini file."
     exit 1
 }
 
-# Check if the number of arguments is exactly 2
+# Check if the number of arguments is exactly 1
 if [ $# -ne 1 ]; then
     display_help
 fi
@@ -29,11 +29,28 @@ fi
 # Get the first argument
 action=$1
 
-# Check if the action is "flash", "compile", or "clean"
+# Function to check if the port exists
+function check_port_existence {
+    if [ ! -e "$1" ]; then
+        echo "Error: Serial port $1 not found!"
+        echo "Make sure the device is connected and try again."
+        exit 1
+    fi
+}
+
+# Prompt for port if action is flash
 if [ "$action" == "flash" ]; then
-    echo "Performing flash operation..."
-    sudo pio run -e flash --target upload
-    sudo pio device monitor -b 115200 -p /dev/ttyUSB0
+    read -p "Enter the serial port (e.g., /dev/ttyUSB0): " port
+    if [ -z "$port" ]; then
+        echo "Error: No port specified!"
+        exit 1
+    fi
+
+    check_port_existence "$port"
+
+    echo "Performing flash operation on port $port..."
+    sudo pio run -e flash --target upload --upload-port "$port"
+    sudo pio device monitor -b 115200 -p "$port"
 
 elif [ "$action" == "compile" ]; then
     echo "Performing compile operation..."
