@@ -109,7 +109,7 @@ void rs485_poll(void *parameter)
             xSemaphoreGive(rs485_mutex); // Release mutex
         }
         
-        vTaskDelay(pdMS_TO_TICKS(10000)); // Prevent excessive polling
+        vTaskDelay(pdMS_TO_TICKS(60000)); // Prevent excessive polling
     }
 }
 
