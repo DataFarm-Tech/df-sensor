@@ -1,6 +1,6 @@
 #include "lora_rx_thread.h"
 #include "config.h"
-#include "sensor_int.h"
+#include "rs485_int.h"
 #include "utils.h"
 
 #include <SPI.h>
@@ -9,9 +9,13 @@
 RH_RF95 rf95(RFM95_NSS, RFM95_INT); // Create the rf95 obj
 
 void lora_listener(void *parameter);
-void swap_src_dest_addresses(uint8_t buffer[]);
 void send_packet(uint8_t lora_data_tx[]);
 
+/**
+ * @brief Initializes the LoRa module and configures its settings.
+ *        This function sets the frequency, transmission power, and modem configuration.
+ *        It loops until the LoRa module is successfully initialized.
+ */
 void init_lora() //TODO: add timeout to prevent stalling
 {
     while (!rf95.init())
@@ -35,9 +39,12 @@ void init_lora() //TODO: add timeout to prevent stalling
     rf95.setModemConfig(RH_RF95::Bw125Cr48Sf4096);
 }
 
-/*
-TODO: write thread to listen to lora msg
-*/
+/**
+ * @brief LoRa listener thread that continuously listens for incoming LoRa messages.
+ *        If a valid message is received, it processes the data and forwards it accordingly.
+ * 
+ * @param parameter Unused parameter (for FreeRTOS compatibility).
+ */
 void lora_listener(void *parameter)
 {
     while (1)
@@ -53,7 +60,8 @@ void lora_listener(void *parameter)
                 {
                     if (!is_rs485_alive)
                     {
-                        //output LED to RED
+                        //TODO: output LED to RED
+
                         printf("rs485 has died\n");
                         vTaskDelete(NULL); // Delete the current task
                     }
@@ -73,6 +81,11 @@ void lora_listener(void *parameter)
     vTaskDelete(NULL);
 }
 
+/**
+ * @brief Sends a LoRa packet.
+ * 
+ * @param lora_data_tx The buffer containing the data to be transmitted.
+ */
 void send_packet(uint8_t lora_data_tx[])
 {
     if (rf95.send(lora_data_tx, LORA_DATA_LEN))

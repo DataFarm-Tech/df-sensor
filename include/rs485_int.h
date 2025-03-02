@@ -1,5 +1,5 @@
-#ifndef SENSOR_INT_H
-#define SENSOR_INT_H
+#ifndef RS485_INT_H
+#define RS485_INT_H
 
 #include <Arduino.h>
 
@@ -10,4 +10,4 @@ void read_sensor(uint8_t *rs485_data);
 void rs485_poll(void *parameter);
 void init_rs485();
 
-#endif // SENSOR_INT_H
+#endif // RS485_INT_H

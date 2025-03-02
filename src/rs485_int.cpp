@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "sensor_int.h"
+#include "rs485_int.h"
 #include "config.h"
 #include "utils.h"
 
@@ -48,11 +48,16 @@ byte poll_rs485_int[] = {
     0x91,        // Error Check (Lo)
     0x59         // Error Check (Hi)
 };
-
 // for further info see -> docs/rs485_comms_datasheet.pdf or README.md
 
 void process_rs485_msg(uint8_t rs485_data[], uint8_t lora_data_rx[]);
 
+
+/**
+ * @brief Sends a polling request over RS485 to check if the device is alive.
+ * 
+ * @param parameter Unused parameter for FreeRTOS task compatibility.
+ */
 void rs485_poll(void *parameter)
 {
     int bytes_recv;
@@ -89,7 +94,7 @@ void rs485_poll(void *parameter)
                     bytes_recv++;
                 }
             }
-            
+
             if (!compute_crc16(poll_result, bytes_recv))
             {
                 printf("crc invalid\n");
@@ -108,7 +113,11 @@ void rs485_poll(void *parameter)
     }
 }
 
-
+/**
+ * @brief Reads sensor data over RS485 and prepares it for LoRa transmission.
+ * 
+ * @param lora_data_rx Buffer to store processed sensor data for LoRa transmission.
+ */
 void read_sensor(uint8_t lora_data_rx[])
 {
     int bytes_recv;
@@ -159,12 +168,12 @@ void read_sensor(uint8_t lora_data_rx[])
 }
 
 
-/*
-int process_rs485_msg(int rs485_data[RS485_DATA_LEN], data * rs485_data)
-
-reads humidity and ph from buffer, buffer holds data from rs485 read.
-prepare data to send as LoRa packet.
-*/
+/**
+ * @brief Processes the received RS485 data and extracts sensor values.
+ * 
+ * @param rs485_data Buffer containing the raw RS485 data response.
+ * @param lora_data_rx Buffer where processed sensor values will be stored for LoRa transmission.
+ */
 void process_rs485_msg(uint8_t rs485_data[], uint8_t lora_data_rx[])
 {
     printf("[%s] processing rs485_data\n", NODE_ID);
@@ -203,6 +212,9 @@ void process_rs485_msg(uint8_t rs485_data[], uint8_t lora_data_rx[])
            lora_data_rx[2 * ADDRESS_SIZE + 6]);
 }
 
+/**
+ * @brief Initializes the RS485 communication interface.
+ */
 void init_rs485()
 {
     Serial2.begin(RS485_BAUD, SERIAL_8N1, RS485_RX, RS485_TX);

@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include "lora_rx_thread.h"
 #include "config.h"
-#include "sensor_int.h"
+#include "rs485_int.h"
 
 TaskHandle_t lora_listener_th; // thread handler for lora listen thread
 TaskHandle_t rs485_poll_th; // thread handler for rs485 polling thread
