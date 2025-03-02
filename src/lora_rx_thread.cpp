@@ -11,7 +11,7 @@ void lora_listener(void *parameter);
 void swap_src_dest_addresses(uint8_t buffer[]);
 void send_packet(uint8_t lora_data_tx[]);
 
-void setup_lora()
+void init_lora() //TODO: add timeout to prevent stalling
 {
     while (!rf95.init())
     {
@@ -55,6 +55,10 @@ void lora_listener(void *parameter)
                         //output LED to RED
                         printf("rs485 has died\n");
                         vTaskDelete(NULL); // Delete the current task
+                    }
+                    else
+                    {
+                        printf("rs485 is alive\n");
                     }
 
                     read_sensor(lora_data_rx);

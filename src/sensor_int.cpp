@@ -17,12 +17,14 @@
 #define POTASSIUM_L 16
 #define POTASSIUM_H 17
 
-#define RS485_POLL_LEN 7
+#define RS485_MSG_POLL_RES_LEN 7
+#define RS485_MSG_READ_RES_LEN 19
 
 int is_rs485_alive = 0;
+SemaphoreHandle_t rs485_mutex;
 
 
-/* RS485 Modbus RTU Frame*/
+/* RS485 Modbus RTU Frame (Read NPK)*/
 byte read_data_msg[] = {
     0x01,         // Address
     0x03,    // Function Code
@@ -33,9 +35,8 @@ byte read_data_msg[] = {
     0x04,        // Error Check (Lo)
     0x08         // Error Check (Hi)
 };
-// for further info see -> docs/rs485_comms_datasheet.pdf or README.md
 
-
+/* RS485 Modbus RTU Frame (Enquire SlaveID)*/
 byte poll_rs485_int[] = {
     0xFF,         // Address
     0x03,    // Function Code
@@ -47,83 +48,102 @@ byte poll_rs485_int[] = {
     0x59         // Error Check (Hi)
 };
 
+// for further info see -> docs/rs485_comms_datasheet.pdf or README.md
+
+void process_rs485_msg(uint8_t rs485_data[], uint8_t lora_data_rx[]);
 
 void rs485_poll(void *parameter)
 {
     int bytes_recv;
     unsigned long start_time;
-    uint8_t poll_result[7];
+    uint8_t poll_result[RS485_MSG_POLL_RES_LEN]; //TODO: change this to has define
 
     while (1)
     {
         bytes_recv = 0;
-        start_time = millis();
-
-        digitalWrite(RS485_RTS, HIGH); //open comms
-        delayMicroseconds(1000);
-
-        while (Serial2.available())
+        
+        if (xSemaphoreTake(rs485_mutex, portMAX_DELAY) == pdTRUE)
         {
-            Serial2.read(); // Clear buffer
-        }
-
-        Serial2.write(poll_rs485_int, 8);
-        Serial2.flush();
-
-        digitalWrite(RS485_RTS, LOW); //close comms
-        delayMicroseconds(1000);
-
-        while (((millis() - start_time) < 1000) && (bytes_recv < sizeof(poll_result)))
-        {
-            if (Serial2.available())
+            start_time = millis();
+            
+            digitalWrite(RS485_RTS, HIGH); //open comms
+            delayMicroseconds(1000);
+    
+            while (Serial2.available())
             {
-                poll_result[bytes_recv] = Serial2.read();
-                bytes_recv++;
+                Serial2.read(); // Clear buffer
             }
+    
+            Serial2.write(poll_rs485_int, sizeof(poll_rs485_int));
+            Serial2.flush();
+    
+            digitalWrite(RS485_RTS, LOW); //close comms
+            delayMicroseconds(1000);
+    
+            while (((millis() - start_time) < 1000) && (bytes_recv < sizeof(poll_result)))
+            {
+                if (Serial2.available())
+                {
+                    poll_result[bytes_recv] = Serial2.read();
+                    bytes_recv++;
+                }
+            }
+            
+            if (bytes_recv == sizeof(poll_result))
+            {
+                is_rs485_alive = 1;
+            }
+            
+            memset(poll_result, 0, sizeof(poll_result)); //clear buffer
+            xSemaphoreGive(rs485_mutex); // Release mutex
         }
-
-        if (bytes_recv == sizeof(poll_result))
-        {
-            //Set is_rs485_alive to true/0
-            is_rs485_alive = 1;
-        }
+        
+        vTaskDelay(pdMS_TO_TICKS(10000)); // Prevent excessive polling
     }
 }
 
 
 void read_sensor(uint8_t lora_data_rx[])
-{  
-    uint8_t rs485_data[RS485_DATA_LEN];
-    int bytes_recv = 0;
-    unsigned long start_time = millis();
+{
+    int bytes_recv;
+    unsigned long start_time;
+    uint8_t rs485_data[RS485_MSG_READ_RES_LEN];
 
-
-    while (Serial2.available())
-    {
-        Serial2.read(); // Clear buffer
-    }
-
-
-    Serial2.write(poll_rs485_int, READ_DATA_LEN);
-    Serial2.flush();
+    bytes_recv = 0;
     
-    digitalWrite(RS485_RTS, LOW);
-    delayMicroseconds(1000);
-    
-    while (((millis() - start_time) < 1000) && (bytes_recv < READ_DATA_LEN))
+    if (xSemaphoreTake(rs485_mutex, portMAX_DELAY) == pdTRUE)
     {
-        if (Serial2.available())
+        start_time = millis();
+        
+        digitalWrite(RS485_RTS, HIGH); //open comms
+        delayMicroseconds(1000);
+    
+        while (Serial2.available())
         {
-            rs485_data[bytes_recv] = Serial2.read();
-            bytes_recv++;
+            Serial2.read(); // Clear buffer
         }
-    }
+    
+        Serial2.write(read_data_msg, sizeof(read_data_msg));
+        Serial2.flush();
+    
+        digitalWrite(RS485_RTS, LOW); //close comms
+        delayMicroseconds(1000);
+    
+        while (((millis() - start_time) < 1000) && (bytes_recv < sizeof(rs485_data)))
+        {
+            if (Serial2.available())
+            {
+                rs485_data[bytes_recv] = Serial2.read();
+                bytes_recv++;
+            }
+        }
+    
+        if (bytes_recv == sizeof(rs485_data))
+        {
+            process_rs485_msg(rs485_data, lora_data_rx);
+        }
 
-    // process
-    if (bytes_recv == RS485_DATA_LEN)
-    {
-        process_rs485_msg(rs485_data, lora_data_rx);
-        return;
+        xSemaphoreGive(rs485_mutex); // Release mutex
     }
 }
 
@@ -147,10 +167,6 @@ void process_rs485_msg(uint8_t rs485_data[], uint8_t lora_data_rx[])
     int raw_phosphorus = (rs485_data[PHOSPHORUS_L] << 8) | (rs485_data[PHOSPHORUS_H]);
     int raw_potassium = (rs485_data[POTASSIUM_L] << 8) | (rs485_data[POTASSIUM_H]);
 
-    // Print out the raw sensor data
-    printf("Raw Data - Humidity: %d, Temperature: %d, Conductivity: %d, PH: %d, Nitrogen: %d, Phosphorus: %d, Potassium: %d\n",
-           raw_humidity, raw_temperature, raw_conductivity, raw_ph, raw_nitrogen, raw_phosphorus, raw_potassium);
-
     // Scale the numerical data accordingly
     raw_humidity = raw_humidity * 0.1; // Scale by 0.1
     raw_temperature = raw_temperature * 0.1;
@@ -167,8 +183,13 @@ void process_rs485_msg(uint8_t rs485_data[], uint8_t lora_data_rx[])
 
     // Print out the final values being stored into the LoRa packet
     printf("Final Data to send: Humidity: %d, Temperature: %d, Conductivity: %d, PH: %d, Nitrogen: %d, Phosphorus: %d, Potassium: %d\n",
-           lora_data_rx[2 * ADDRESS_SIZE + 0], lora_data_rx[2 * ADDRESS_SIZE + 1], lora_data_rx[2 * ADDRESS_SIZE + 2],
-           lora_data_rx[2 * ADDRESS_SIZE + 3], lora_data_rx[2 * ADDRESS_SIZE + 4], lora_data_rx[2 * ADDRESS_SIZE + 5], lora_data_rx[2 * ADDRESS_SIZE + 6]);
+           lora_data_rx[2 * ADDRESS_SIZE + 0], 
+           lora_data_rx[2 * ADDRESS_SIZE + 1], 
+           lora_data_rx[2 * ADDRESS_SIZE + 2],
+           lora_data_rx[2 * ADDRESS_SIZE + 3], 
+           lora_data_rx[2 * ADDRESS_SIZE + 4], 
+           lora_data_rx[2 * ADDRESS_SIZE + 5], 
+           lora_data_rx[2 * ADDRESS_SIZE + 6]);
 }
 
 void init_rs485()
@@ -176,4 +197,5 @@ void init_rs485()
     Serial2.begin(RS485_BAUD, SERIAL_8N1, RS485_RX, RS485_TX);
     pinMode(RS485_RTS, OUTPUT);
     digitalWrite(RS485_RTS, LOW); // SET PIN NORMALLY LOW
+    rs485_mutex = xSemaphoreCreateMutex();
 }
