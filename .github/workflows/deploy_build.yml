@@ -34,7 +34,7 @@ jobs:
           cp .pio/build/compile/firmware.bin firmware/firmware.bin
           ls firmware/firmware.bin
       - name: Set release date
-        run: echo "RELEASE_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+        run: echo "RELEASE_DATE=$(date +'%Y-%m-%d_%H-%M-%S')" >> $GITHUB_ENV
 
       - name: Create GitHub release
         id: create-new-release
