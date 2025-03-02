@@ -1,6 +1,7 @@
 #include "lora_rx_thread.h"
 #include "config.h"
 #include "sensor_int.h"
+#include "utils.h"
 
 #include <SPI.h>
 #include <RH_RF95.h>
@@ -56,10 +57,6 @@ void lora_listener(void *parameter)
                         printf("rs485 has died\n");
                         vTaskDelete(NULL); // Delete the current task
                     }
-                    else
-                    {
-                        printf("rs485 is alive\n");
-                    }
 
                     read_sensor(lora_data_rx);
                     swap_src_dest_addresses(lora_data_rx);
@@ -74,15 +71,6 @@ void lora_listener(void *parameter)
     }
 
     vTaskDelete(NULL);
-}
-
-// TODO: move this to utils
-void swap_src_dest_addresses(uint8_t buffer[])
-{
-    uint8_t tmp[ADDRESS_SIZE];
-    memcpy(tmp, buffer, ADDRESS_SIZE);
-    memcpy(buffer, buffer + ADDRESS_SIZE, ADDRESS_SIZE);
-    memcpy(buffer + ADDRESS_SIZE, tmp, ADDRESS_SIZE);
 }
 
 void send_packet(uint8_t lora_data_tx[])
