@@ -31,6 +31,8 @@
 (will add soon)
 #
 
+## Reference to RF95 lib
+https://www.airspayce.com/mikem/arduino/RadioHead/classRH__RF95.html
 
 
 Sub routine (init):
