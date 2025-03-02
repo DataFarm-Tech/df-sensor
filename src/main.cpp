@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "lora_rx_thread.h"
 #include "config.h"
+#include "utils.h"
 #include "rs485_int.h"
 
 TaskHandle_t lora_listener_th; // thread handler for lora listen thread
@@ -13,16 +14,12 @@ void setup()
 {
     sleep(2);
     Serial.begin(BAUD_RATE);
-    printf("[%s]: starting serial console\n", NODE_ID);
-    
-    printf("[%s]: init lora listen thread\n", NODE_ID);
+    PRINT_STR("staring serial console");
     init_lora();
-    
-    printf("[%s]: starting serial console\n", NODE_ID);
     init_rs485();
 
     xTaskCreatePinnedToCore(lora_listener, "lora_listener", 10000, NULL, 1, &lora_listener_th, 0); // create lora listen thread
-    xTaskCreatePinnedToCore(rs485_poll, "rs485_poll", 10000, NULL, 2, &rs485_poll_th, 1); // create lora listen thread
+    xTaskCreatePinnedToCore(rs485_poll, "rs485_poll", 10000, NULL, 1, &rs485_poll_th, 1); // create lora listen thread
 }
 
 /*

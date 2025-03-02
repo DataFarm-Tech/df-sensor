@@ -47,6 +47,8 @@ void init_lora() //TODO: add timeout to prevent stalling
  */
 void lora_listener(void *parameter)
 {
+    PRINT_STR("init lora listen thread");
+    
     while (1)
     {
         if (rf95.available())

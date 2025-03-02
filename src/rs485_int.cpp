@@ -89,6 +89,7 @@ void rs485_poll(void *parameter)
     unsigned long start_time;
     uint8_t poll_result[RS485_MSG_POLL_RES_LEN]; //TODO: change this to has define
 
+    PRINT_STR("init rs485 poll thread");
     while (1)
     {
         bytes_recv = 0;
@@ -115,7 +116,7 @@ void rs485_poll(void *parameter)
 
             if (!compute_crc16(poll_result, bytes_recv))
             {
-                printf("crc invalid\n");
+                PRINT_STR("crc invalid");
             }
             
             if (bytes_recv == sizeof(poll_result))
@@ -173,7 +174,7 @@ void read_sensor(uint8_t lora_data_rx[])
 
         if (!compute_crc16(rs485_data, bytes_recv))
         {
-            printf("crc invalid\n");
+            PRINT_STR("crc invalid");
         }
     
         if (bytes_recv == sizeof(rs485_data))
@@ -194,7 +195,7 @@ void read_sensor(uint8_t lora_data_rx[])
  */
 void process_rs485_msg(uint8_t rs485_data[], uint8_t lora_data_rx[])
 {
-    printf("[%s] processing rs485_data\n", NODE_ID);
+    PRINT_STR("processing rs485 data");
 
     // Parse the raw data from rs485_data
     int raw_humidity = (rs485_data[HUMIDITY_L] << 8) | (rs485_data[HUMIDITY_H]);
