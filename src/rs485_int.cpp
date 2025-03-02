@@ -55,7 +55,9 @@ void open_rs485_port(void);
 void close_rs485_port(void);
 
 
-
+/**
+ * @brief Open's the rs485 connection. By setting the GPIO pin to HIGH.
+ */
 void open_rs485_port(void)
 {
     digitalWrite(RS485_RTS, HIGH); //open comms
@@ -67,6 +69,9 @@ void open_rs485_port(void)
     }
 }
 
+/**
+ * @brief Closes the rs485 connection. By setting the GPIO pin to LOW.
+ */
 void close_rs485_port(void)
 {
     digitalWrite(RS485_RTS, LOW); //close comms
