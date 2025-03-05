@@ -20,20 +20,20 @@ void init_lora() //TODO: add timeout to prevent stalling
 {
     while (!rf95.init())
     {
-        printf("[%s]: LoRa radio init failed\n", NODE_ID);
+        PRINT_STR("LoRa radio init failed");
     }
 
-    printf("[%s]: LoRa setup ok, setting LoRa frequency\n", NODE_ID);
+    PRINT_STR("LoRa setup ok, setting LoRa frequency");
 
     if (!rf95.setFrequency(RF95_FREQ))
     {
-        printf("[%s]: LoRa setup error, LoRa module unable to set frequency\n", NODE_ID);
+        PRINT_STR("LoRa setup error, LoRa module unable to set frequency");
         while (1);
     }
 
-    printf("[%s]: LoRa setup established to 915 MHz\n", NODE_ID);
+    PRINT_STR("LoRa setup established to 915 MHz");
 
-    printf("[%s]: LoRa setup, setting sync word.\n", NODE_ID);
+    PRINT_STR("LoRa setup, setting sync word");
 
     rf95.setTxPower(23, false);
     rf95.setModemConfig(RH_RF95::Bw125Cr48Sf4096);
@@ -65,7 +65,8 @@ void lora_listener(void *parameter)
                         pinMode(RS485_STATUS_ERROR, OUTPUT);
                         digitalWrite(RS485_STATUS_ERROR, HIGH);
 
-                        printf("rs485 has died\n");
+                        PRINT_STR("rs485 has died");
+                        
                         vTaskDelete(NULL); // Delete the current task
                     }
 
@@ -73,8 +74,7 @@ void lora_listener(void *parameter)
                     swap_src_dest_addresses(lora_data_rx);
                 }
                 
-                // send packet
-                send_packet(lora_data_rx);
+                send_packet(lora_data_rx); // send packet
             }
         }
 
@@ -93,10 +93,10 @@ void send_packet(uint8_t lora_data_tx[])
 {
     if (rf95.send(lora_data_tx, LORA_DATA_LEN))
     {
-        printf("Packet sent\n");
+        PRINT_STR("Packet sent");
     }
     else
     {
-        printf("Packet failed\n");
+        PRINT_STR("Packet sent");
     }
 }
