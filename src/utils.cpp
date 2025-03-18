@@ -36,6 +36,7 @@ uint16_t compute_crc16(uint8_t *data, uint8_t length)
     return crc;
 }
 
+
 /**
  * @brief Validates the CRC-16 (Modbus) checksum of a given packet.
  * 
@@ -71,4 +72,53 @@ void swap_src_dest_addresses(uint8_t buffer[])
     memcpy(tmp, buffer, ADDRESS_SIZE);
     memcpy(buffer, buffer + ADDRESS_SIZE, ADDRESS_SIZE);
     memcpy(buffer + ADDRESS_SIZE, tmp, ADDRESS_SIZE);
+}
+
+
+/**
+ * @brief Helper function to calc the median of a sorted array of size 'n'
+ * @param arr A uint8_t array holding unsorted values
+ * @param n The size of arr
+*/
+uint8_t calc_med(uint8_t arr[], int n) 
+{
+    sort_arr(arr, n);
+
+    // Return the middle element (median) after sorting
+    if (n % 2 != 0) 
+    {
+        return arr[n / 2];
+    } 
+    else 
+    {
+        // Even number of elements, median is the average of the two middle elements
+        uint8_t middle1 = arr[n / 2 - 1];
+        uint8_t middle2 = arr[n / 2];
+        return (middle1 + middle2) / 2; // Average of the two middle elements
+    }
+}
+
+
+/**
+ * @brief A helper function to sort an array of size 'n' using bubble sort.
+ * @param arr array holding unsorted vals
+ * @param n size of arr
+ * @return void
+*/
+void sort_arr(uint8_t arr[], int n) 
+{
+    uint8_t temp;
+    
+    for (int i = 0; i < n - 1; i++) 
+    {
+        for (int j = i + 1; j < n; j++) 
+        {
+            if (arr[i] > arr[j]) 
+            {
+                temp = arr[i];
+                arr[i] = arr[j];
+                arr[j] = temp;
+            }
+        }
+    }
 }

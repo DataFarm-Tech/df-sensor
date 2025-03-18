@@ -3,6 +3,12 @@
 #include "config.h"
 #include "utils.h"
 
+/**
+ * @brief Converts two uint8_t's to a uint16_t
+ * @param sensor The rs485 pins for a given sensor type
+*/
+#define READ_SENSOR_DATA(sensor) ((rs485_data[sensor##_L] << 8) | (rs485_data[sensor##_H]))
+
 #define HUMIDITY_L 4
 #define HUMIDITY_H 5
 #define TEMPERATURE_L 6
@@ -20,6 +26,19 @@
 
 #define RS485_MSG_POLL_RES_LEN 7
 #define RS485_MSG_READ_RES_LEN 19
+
+#define NUM_DATA_READS 5
+
+typedef struct rs485_data_ts
+{
+    uint8_t moisture;
+    uint8_t temp;
+    uint8_t con;
+    uint8_t ph;
+    uint8_t nit;
+    uint8_t phos;
+    uint8_t pot;
+};
 
 int is_rs485_alive = 0;
 SemaphoreHandle_t rs485_mutex;
@@ -134,55 +153,77 @@ void rs485_poll(void *parameter)
 
 /**
  * @brief Reads sensor data over RS485 and prepares it for LoRa transmission.
+ * does 5 reads for each sensor type. Then calculates the median for each sensor type. 
+ * calculate_median is used.
  * 
  * @param lora_data_rx Buffer to store processed sensor data for LoRa transmission.
  */
 void read_sensor(uint8_t lora_data_rx[])
 {
-    int bytes_recv;
+    int bytes_recv = 0;
     unsigned long start_time;
+    rs485_data_ts data_field;
     uint8_t rs485_data[RS485_MSG_READ_RES_LEN];
 
-    bytes_recv = 0;
-    
+    // 2D array for storing sensor data for each read (5 reads, NUM_SENSORS)
+    uint8_t sensor_data[NUM_DATA_READS][7];  // 7 sensors (moisture, temp, con, ph, nit, phos, pot)
+
     if (xSemaphoreTake(rs485_mutex, portMAX_DELAY) == pdTRUE)
     {
-        start_time = millis();
-        
-        digitalWrite(RS485_RTS, HIGH); //open comms
-        delayMicroseconds(1000);
-    
-        while (Serial2.available())
+        for (int i = 0; i < NUM_DATA_READS; i++)  // NUM_DATA_READS iterations
         {
-            Serial2.read(); // Clear buffer
-        }
-    
-        Serial2.write(read_data_msg, sizeof(read_data_msg));
-        Serial2.flush();
-    
-        digitalWrite(RS485_RTS, LOW); //close comms
-        delayMicroseconds(1000);
-    
-        while (((millis() - start_time) < 1000) && (bytes_recv < sizeof(rs485_data)))
-        {
-            if (Serial2.available())
+            bytes_recv = 0;  // Reset bytes_recv for each read
+            start_time = millis();
+
+            open_rs485_port();
+
+            // Send read request
+            Serial2.write(read_data_msg, sizeof(read_data_msg));
+            Serial2.flush();
+
+            close_rs485_port();
+
+            // Wait for data with a timeout of 1000ms
+            while (((millis() - start_time) < 1000) && (bytes_recv < sizeof(rs485_data)))
             {
-                rs485_data[bytes_recv] = Serial2.read();
-                bytes_recv++;
+                if (Serial2.available())
+                {
+                    rs485_data[bytes_recv] = Serial2.read();
+                    bytes_recv++;
+                }
             }
+
+            // Check if the received data is valid (CRC check)
+            if ((!compute_crc16(rs485_data, bytes_recv)) && (bytes_recv == sizeof(rs485_data)))
+            {
+                PRINT_STR("CRC invalid");
+                break;  // Exit the loop if CRC is invalid
+            }
+
+            // Store sensor data for the current read
+            sensor_data[i][0] = READ_SENSOR_DATA(HUMIDITY);        
+            sensor_data[i][1] = READ_SENSOR_DATA(TEMPERATURE);
+            sensor_data[i][2] = READ_SENSOR_DATA(CONDUCTIVITY);
+            sensor_data[i][3] = READ_SENSOR_DATA(PH);
+            sensor_data[i][4] = READ_SENSOR_DATA(NITROGEN);
+            sensor_data[i][5] = READ_SENSOR_DATA(PHOSPHORUS);
+            sensor_data[i][6] = READ_SENSOR_DATA(POTASSIUM);
+
+            sleep(2000);
         }
 
-        if (!compute_crc16(rs485_data, bytes_recv))
-        {
-            PRINT_STR("crc invalid");
-        }
-    
-        if (bytes_recv == sizeof(rs485_data))
-        {
-            process_rs485_msg(rs485_data, lora_data_rx);
-        }
+        // Calculate median for each sensor after collecting all 5 values
+        data_field.moisture = calculate_median(&sensor_data[0][0]);
+        data_field.temp = calculate_median(&sensor_data[0][1]);
+        data_field.con = calculate_median(&sensor_data[0][2]);
+        data_field.ph = calculate_median(&sensor_data[0][3]);
+        data_field.nit = calculate_median(&sensor_data[0][4]);
+        data_field.phos = calculate_median(&sensor_data[0][5]);
+        data_field.pot = calculate_median(&sensor_data[0][6]);
 
-        xSemaphoreGive(rs485_mutex); // Release mutex
+        process_rs485_msg(data_field, lora_data_rx);
+
+        xSemaphoreGive(rs485_mutex);
     }
 }
 
@@ -193,32 +234,23 @@ void read_sensor(uint8_t lora_data_rx[])
  * @param rs485_data Buffer containing the raw RS485 data response.
  * @param lora_data_rx Buffer where processed sensor values will be stored for LoRa transmission.
  */
-void process_rs485_msg(uint8_t rs485_data[], uint8_t lora_data_rx[])
+void process_rs485_msg(rs485_data_ts data_field, uint8_t lora_data_rx[])
 {
     PRINT_STR("processing rs485 data");
 
-    // Parse the raw data from rs485_data
-    int raw_humidity = (rs485_data[HUMIDITY_L] << 8) | (rs485_data[HUMIDITY_H]);
-    int raw_temperature = (rs485_data[TEMPERATURE_L] << 8) | (rs485_data[TEMPERATURE_H]);
-    int raw_conductivity = (rs485_data[CONDUCTIVITY_L] << 8) | (rs485_data[CONDUCTIVITY_H]);
-    int raw_ph = (rs485_data[PH_L] << 8) | (rs485_data[PH_H]);
-    int raw_nitrogen = (rs485_data[NITROGEN_L] << 8) | (rs485_data[NITROGEN_H]);
-    int raw_phosphorus = (rs485_data[PHOSPHORUS_L] << 8) | (rs485_data[PHOSPHORUS_H]);
-    int raw_potassium = (rs485_data[POTASSIUM_L] << 8) | (rs485_data[POTASSIUM_H]);
-
-    // Scale the numerical data accordingly
-    raw_humidity = raw_humidity * 0.1; // Scale by 0.1
-    raw_temperature = raw_temperature * 0.1;
-    raw_ph = raw_ph * 0.1;
+    //data conversions
+    data_field.moisture = data_field.moisture * 0.1;
+    data_field.temp = data_field.temp * 0.1;
+    data_field.ph = data_field.ph * 0.1;
 
     // Write the data to the 7 bytes in the lora data that correspond to the values
-    lora_data_rx[2 * ADDRESS_SIZE + 0] = raw_humidity;
-    lora_data_rx[2 * ADDRESS_SIZE + 1] = raw_temperature;
-    lora_data_rx[2 * ADDRESS_SIZE + 2] = raw_conductivity;
-    lora_data_rx[2 * ADDRESS_SIZE + 3] = raw_ph;
-    lora_data_rx[2 * ADDRESS_SIZE + 4] = raw_nitrogen;
-    lora_data_rx[2 * ADDRESS_SIZE + 5] = raw_phosphorus;
-    lora_data_rx[2 * ADDRESS_SIZE + 6] = raw_potassium;
+    lora_data_rx[2 * ADDRESS_SIZE + 0] = data_field.moisture;
+    lora_data_rx[2 * ADDRESS_SIZE + 1] = data_field.temp;
+    lora_data_rx[2 * ADDRESS_SIZE + 2] = data_field.con;
+    lora_data_rx[2 * ADDRESS_SIZE + 3] = data_field.ph;
+    lora_data_rx[2 * ADDRESS_SIZE + 4] = data_field.nit;
+    lora_data_rx[2 * ADDRESS_SIZE + 5] = data_field.phos;
+    lora_data_rx[2 * ADDRESS_SIZE + 6] = data_field.pot;
 
     // Print out the final values being stored into the LoRa packet
     printf("Final Data to send: Humidity: %d, Temperature: %d, Conductivity: %d, PH: %d, Nitrogen: %d, Phosphorus: %d, Potassium: %d\n",

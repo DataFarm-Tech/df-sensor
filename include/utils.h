@@ -7,3 +7,5 @@
 
 uint16_t compute_crc16(uint8_t *data, uint8_t length);
 void swap_src_dest_addresses(uint8_t buffer[]);
+uint8_t calc_med(uint8_t arr[], int n); 
+void sort_arr(uint8_t arr[], int n);
