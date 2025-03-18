@@ -1,7 +1,18 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#ifndef NODE_ID
+#define NODE_ID "z8EUNs"
+#endif
+
 #define BAUD_RATE 115200
+
+/*
+RS485 Config
+*/
+#ifndef RS485_EN
+#define RS485_EN 1 //enable by default unless specified in build stage
+#endif
 
 #define RS485_STATUS_OK 9
 #define RS485_STATUS_ERROR 10
@@ -12,6 +23,13 @@
 #define RS485_BAUD 4800
 #define RS485_POLLING_DELAY 60000
 
+/*
+RFM95 Config
+*/
+#ifndef RFM95_EN
+#define RFM95_EN 1 //enable by default unless specified in build stage
+#endif
+
 #define RFM95_NSS 5	 // NSS/CS P
 #define RFM95_RST 14 // RST
 #define RFM95_INT 27 // Interrupt/DIO0
@@ -20,9 +38,6 @@
 #define RFM95_SCK 18
 #define RF95_FREQ 915.0 // DO NOT CHANGE FROM 915MHZ
 
-#ifndef NODE_ID
-#define NODE_ID "z8EUNs"
-#endif
 
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1

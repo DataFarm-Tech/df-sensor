@@ -15,11 +15,23 @@ void setup()
     sleep(2);
     Serial.begin(BAUD_RATE);
     PRINT_STR("staring serial console");
-    init_lora();
-    init_rs485();
 
-    xTaskCreatePinnedToCore(lora_listener, "lora_listener", 10000, NULL, 1, &lora_listener_th, 0); // create lora listen thread
-    xTaskCreatePinnedToCore(rs485_poll, "rs485_poll", 10000, NULL, 1, &rs485_poll_th, 1); // create lora listen thread
+    #if RFM95_EN == 1
+        PRINT_STR("LoRa is enabled");
+        init_lora();
+        xTaskCreatePinnedToCore(lora_listener, "lora_listener", 10000, NULL, 1, &lora_listener_th, 0); // create lora listen thread
+    #else
+        PRINT_STR("LoRa is disabled");
+    #endif
+
+
+    #if RS485_EN == 1
+        PRINT_STR("rs485 is enabled");
+        init_rs485();        
+        xTaskCreatePinnedToCore(rs485_poll, "rs485_poll", 10000, NULL, 1, &rs485_poll_th, 1); // create lora listen thread
+    #else
+        PRINT_STR("rs485 is disabled");
+    #endif
 }
 
 /*
