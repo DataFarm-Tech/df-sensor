@@ -29,7 +29,7 @@
 
 #define NUM_DATA_READS 5
 
-typedef struct rs485_data_ts
+typedef struct
 {
     uint8_t moisture;
     uint8_t temp;
@@ -38,7 +38,7 @@ typedef struct rs485_data_ts
     uint8_t nit;
     uint8_t phos;
     uint8_t pot;
-};
+} rs485_data_ts;
 
 int is_rs485_alive = 0;
 SemaphoreHandle_t rs485_mutex;
@@ -69,7 +69,7 @@ byte poll_rs485_int[] = {
 };
 // for further info see -> docs/rs485_comms_datasheet.pdf or README.md
 
-void process_rs485_msg(uint8_t rs485_data[], uint8_t lora_data_rx[]);
+void process_rs485_msg(rs485_data_ts data_field, uint8_t lora_data_rx[]);
 void open_rs485_port(void);
 void close_rs485_port(void);
 
@@ -147,14 +147,14 @@ void rs485_poll(void *parameter)
             xSemaphoreGive(rs485_mutex); // Release mutex
         }
         
-        vTaskDelay(pdMS_TO_TICKS(60000)); // Prevent excessive polling
+        vTaskDelay(pdMS_TO_TICKS(RS485_POLLING_DELAY)); // Prevent excessive polling
     }
 }
 
 /**
  * @brief Reads sensor data over RS485 and prepares it for LoRa transmission.
  * does 5 reads for each sensor type. Then calculates the median for each sensor type. 
- * calculate_median is used.
+ * calc_med is used.
  * 
  * @param lora_data_rx Buffer to store processed sensor data for LoRa transmission.
  */
@@ -212,14 +212,14 @@ void read_sensor(uint8_t lora_data_rx[])
             sleep(2000);
         }
 
-        // Calculate median for each sensor after collecting all 5 values
-        data_field.moisture = calculate_median(&sensor_data[0][0]);
-        data_field.temp = calculate_median(&sensor_data[0][1]);
-        data_field.con = calculate_median(&sensor_data[0][2]);
-        data_field.ph = calculate_median(&sensor_data[0][3]);
-        data_field.nit = calculate_median(&sensor_data[0][4]);
-        data_field.phos = calculate_median(&sensor_data[0][5]);
-        data_field.pot = calculate_median(&sensor_data[0][6]);
+      // Calculate median for each sensor after collecting all 5 values
+      data_field.moisture = calc_med(&sensor_data[0][0], NUM_DATA_READS);  // Pass the 1st sensor data
+      data_field.temp = calc_med(&sensor_data[0][1], NUM_DATA_READS);     // Pass the 2nd sensor data
+      data_field.con = calc_med(&sensor_data[0][2], NUM_DATA_READS);      // Pass the 3rd sensor data
+      data_field.ph = calc_med(&sensor_data[0][3], NUM_DATA_READS);       // Pass the 4th sensor data
+      data_field.nit = calc_med(&sensor_data[0][4], NUM_DATA_READS);      // Pass the 5th sensor data
+      data_field.phos = calc_med(&sensor_data[0][5], NUM_DATA_READS);     // Pass the 6th sensor data
+      data_field.pot = calc_med(&sensor_data[0][6], NUM_DATA_READS);      // Pass the 7th sensor dat
 
         process_rs485_msg(data_field, lora_data_rx);
 

@@ -10,6 +10,7 @@
 #define RS485_TX 17
 #define RS485_RTS 4
 #define RS485_BAUD 4800
+#define RS485_POLLING_DELAY 60000
 
 #define RFM95_NSS 5	 // NSS/CS P
 #define RFM95_RST 14 // RST
