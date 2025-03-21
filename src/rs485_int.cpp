@@ -164,25 +164,25 @@ void read_sensor(uint8_t lora_data_rx[])
     unsigned long start_time;
     rs485_data_ts data_field;
     uint8_t rs485_data[RS485_MSG_READ_RES_LEN];
-
+    
     // 2D array for storing sensor data for each read (5 reads, NUM_SENSORS)
     uint8_t sensor_data[NUM_DATA_READS][7];  // 7 sensors (moisture, temp, con, ph, nit, phos, pot)
-
+    
     if (xSemaphoreTake(rs485_mutex, portMAX_DELAY) == pdTRUE)
     {
         for (int i = 0; i < NUM_DATA_READS; i++)  // NUM_DATA_READS iterations
         {
             bytes_recv = 0;  // Reset bytes_recv for each read
             start_time = millis();
-
+            
             open_rs485_port();
-
+            
             // Send read request
             Serial2.write(read_data_msg, sizeof(read_data_msg));
             Serial2.flush();
-
+            
             close_rs485_port();
-
+            
             // Wait for data with a timeout of 1000ms
             while (((millis() - start_time) < 1000) && (bytes_recv < sizeof(rs485_data)))
             {
@@ -193,13 +193,15 @@ void read_sensor(uint8_t lora_data_rx[])
                 }
             }
 
+            
             // Check if the received data is valid (CRC check)
             if ((!compute_crc16(rs485_data, bytes_recv)) && (bytes_recv == sizeof(rs485_data)))
             {
                 PRINT_STR("CRC invalid");
                 break;  // Exit the loop if CRC is invalid
             }
-
+            
+            
             // Store sensor data for the current read
             sensor_data[i][0] = READ_SENSOR_DATA(HUMIDITY);        
             sensor_data[i][1] = READ_SENSOR_DATA(TEMPERATURE);
@@ -208,8 +210,9 @@ void read_sensor(uint8_t lora_data_rx[])
             sensor_data[i][4] = READ_SENSOR_DATA(NITROGEN);
             sensor_data[i][5] = READ_SENSOR_DATA(PHOSPHORUS);
             sensor_data[i][6] = READ_SENSOR_DATA(POTASSIUM);
-
-            sleep(2000);
+            
+            printf("you are: %d\n", i);
+            sleep(2);
         }
 
       // Calculate median for each sensor after collecting all 5 values
@@ -222,7 +225,6 @@ void read_sensor(uint8_t lora_data_rx[])
       data_field.pot = calc_med(&sensor_data[0][6], NUM_DATA_READS);      // Pass the 7th sensor dat
 
         process_rs485_msg(data_field, lora_data_rx);
-
         xSemaphoreGive(rs485_mutex);
     }
 }
