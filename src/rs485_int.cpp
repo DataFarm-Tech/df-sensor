@@ -211,7 +211,6 @@ void read_sensor(uint8_t lora_data_rx[])
             sensor_data[i][5] = READ_SENSOR_DATA(PHOSPHORUS);
             sensor_data[i][6] = READ_SENSOR_DATA(POTASSIUM);
             
-            printf("you are: %d\n", i);
             sleep(2);
         }
 

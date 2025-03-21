@@ -17,6 +17,4 @@ try:
 except IOError:
     print("File .env not accessible")
 
-rs485_en: str = int(env_vars.get("RS485_EN", 0))  # Default to 0 if not found
-rfm95_en: str = int(env_vars.get("RFM95_EN", 0))  # Default to 0 if not found
 api_host: str = env_vars.get("API_HOST", "")  # Default to empty string if not found

@@ -27,7 +27,5 @@ if response.status_code == 200 or response.status_code == 201:
 
 # Append the configuration to the environment for the build process
 env.Append(CPPDEFINES=[
-    ("NODE_ID", env.StringifyMacro(node_id)),
-    ("RFM95_EN", env.StringifyMacro(str(rfm95_en))),
-    ("RS485_EN", env.StringifyMacro(str(rs485_en)))
+    ("NODE_ID", env.StringifyMacro(node_id))
 ])
