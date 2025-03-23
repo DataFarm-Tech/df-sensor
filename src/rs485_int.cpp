@@ -206,10 +206,6 @@ void process_rs485_msg(uint8_t rs485_data[], uint8_t lora_data_rx[])
     int raw_phosphorus = (rs485_data[PHOSPHORUS_L] << 8) | (rs485_data[PHOSPHORUS_H]);
     int raw_potassium = (rs485_data[POTASSIUM_L] << 8) | (rs485_data[POTASSIUM_H]);
 
-    // Scale the numerical data accordingly
-    raw_humidity = raw_humidity * 0.1; // Scale by 0.1
-    raw_temperature = raw_temperature * 0.1;
-    raw_ph = raw_ph * 0.1;
 
     // Write the data to the 7 bytes in the lora data that correspond to the values
     lora_data_rx[2 * ADDRESS_SIZE + 0] = raw_humidity;
