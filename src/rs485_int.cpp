@@ -211,13 +211,13 @@ void read_sensor(uint8_t lora_data_rx[])
         }
 
         // Calculate median for each sensor after collecting all 5 values
-        data_field.moisture = calc_med(&sensor_data[0], NUM_DATA_READS); // Pass the 1st sensor data
-        data_field.temp = calc_med(&sensor_data[1], NUM_DATA_READS);     // Pass the 2nd sensor data
-        data_field.con = calc_med(&sensor_data[2], NUM_DATA_READS);      // Pass the 3rd sensor data
-        data_field.ph = calc_med(&sensor_data[3], NUM_DATA_READS);       // Pass the 4th sensor data
-        data_field.nit = calc_med(&sensor_data[4], NUM_DATA_READS);      // Pass the 5th sensor data
-        data_field.phos = calc_med(&sensor_data[5], NUM_DATA_READS);     // Pass the 6th sensor data
-        data_field.pot = calc_med(&sensor_data[6], NUM_DATA_READS);      // Pass the 7th sensor dat
+        data_field.moisture = calc_med(sensor_data[0], NUM_DATA_READS); // Pass the 1st sensor data
+        data_field.temp = calc_med(sensor_data[1], NUM_DATA_READS);     // Pass the 2nd sensor data
+        data_field.con = calc_med(sensor_data[2], NUM_DATA_READS);      // Pass the 3rd sensor data
+        data_field.ph = calc_med(sensor_data[3], NUM_DATA_READS);       // Pass the 4th sensor data
+        data_field.nit = calc_med(sensor_data[4], NUM_DATA_READS);      // Pass the 5th sensor data
+        data_field.phos = calc_med(sensor_data[5], NUM_DATA_READS);     // Pass the 6th sensor data
+        data_field.pot = calc_med(sensor_data[6], NUM_DATA_READS);      // Pass the 7th sensor dat
 
         process_rs485_msg(data_field, lora_data_rx);
         xSemaphoreGive(rs485_mutex);
